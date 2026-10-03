@@ -10,7 +10,8 @@ export interface SessionPayload {
 }
 
 export const SESSION_COOKIE = "hollywood_session";
-export const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 วัน (วินาที)
+export const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // ติ๊ก "จดจำฉัน": 7 วัน (วินาที)
+export const SESSION_SHORT_AGE = 60 * 60 * 24; // ไม่ติ๊ก: JWT หมดอายุใน 1 วัน และ cookie หายเมื่อปิดเบราว์เซอร์
 
 function getSecretKey(): Uint8Array {
   const secret = process.env.SESSION_SECRET;
@@ -24,11 +25,14 @@ function isRole(value: unknown): value is Role {
   return value === "ADMIN" || value === "USER";
 }
 
-export async function signSessionToken(payload: SessionPayload): Promise<string> {
+export async function signSessionToken(
+  payload: SessionPayload,
+  maxAgeSeconds: number = SESSION_MAX_AGE,
+): Promise<string> {
   return new SignJWT({ ...payload })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime(`${SESSION_MAX_AGE}s`)
+    .setExpirationTime(`${maxAgeSeconds}s`)
     .sign(getSecretKey());
 }
 

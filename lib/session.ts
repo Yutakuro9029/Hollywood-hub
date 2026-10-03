@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import {
   SESSION_COOKIE,
   SESSION_MAX_AGE,
+  SESSION_SHORT_AGE,
   signSessionToken,
   verifySessionToken,
   type SessionPayload,
@@ -10,15 +11,25 @@ import {
 
 export type { Role, SessionPayload } from "@/lib/auth-token";
 
-/** สร้าง JWT (ลงลายเซ็น) แล้วเก็บลง HttpOnly Cookie */
-export async function createSession(payload: SessionPayload): Promise<void> {
-  const token = await signSessionToken(payload);
+/**
+ * สร้าง JWT (ลงลายเซ็น) แล้วเก็บลง HttpOnly Cookie
+ * remember = true  → cookie อยู่ 7 วัน
+ * remember = false → session cookie (หายเมื่อปิดเบราว์เซอร์) และ JWT หมดอายุใน 1 วัน
+ */
+export async function createSession(
+  payload: SessionPayload,
+  remember = false,
+): Promise<void> {
+  const token = await signSessionToken(
+    payload,
+    remember ? SESSION_MAX_AGE : SESSION_SHORT_AGE,
+  );
   (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: SESSION_MAX_AGE,
+    ...(remember ? { maxAge: SESSION_MAX_AGE } : {}),
   });
 }
 

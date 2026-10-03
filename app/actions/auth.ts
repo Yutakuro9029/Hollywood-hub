@@ -8,6 +8,7 @@ import { createSession, deleteSession } from "@/lib/session";
 export interface LoginState {
   error?: string;
   username?: string;
+  remember?: boolean;
 }
 
 // hash ปลอมไว้เทียบเมื่อไม่พบ username เพื่อให้เวลาตอบสนองใกล้เคียงกัน (กัน user enumeration)
@@ -20,9 +21,10 @@ export async function login(
 ): Promise<LoginState> {
   const username = String(formData.get("username") ?? "").trim();
   const password = String(formData.get("password") ?? "");
+  const remember = formData.get("remember") === "on";
 
   if (!username || !password) {
-    return { error: "กรุณากรอกชื่อผู้ใช้และรหัสผ่าน", username };
+    return { error: "กรุณากรอกชื่อผู้ใช้และรหัสผ่าน", username, remember };
   }
 
   const user = await prisma.users.findUnique({
@@ -36,14 +38,17 @@ export async function login(
   );
 
   if (!user || !isValid) {
-    return { error: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง", username };
+    return { error: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง", username, remember };
   }
 
-  await createSession({
-    userId: user.id,
-    username: user.username,
-    role: user.role, // "ADMIN" | "USER"
-  });
+  await createSession(
+    {
+      userId: user.id,
+      username: user.username,
+      role: user.role, // "ADMIN" | "USER"
+    },
+    remember,
+  );
 
   // redirect() ต้องเรียกนอก try/catch
   redirect(user.role === "ADMIN" ? "/admin" : "/");

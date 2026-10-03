@@ -1,8 +1,23 @@
 import type { Metadata } from "next";
+import { Noto_Serif_Thai, Prompt } from "next/font/google";
 import { redirect } from "next/navigation";
-import { Clapperboard, Star } from "lucide-react";
+import { Clapperboard, Search, Star } from "lucide-react";
 import { getSession } from "@/lib/session";
+import { LoginBackdrop } from "@/components/login-backdrop";
 import { LoginForm } from "@/components/login-form";
+
+const sans = Prompt({
+  subsets: ["thai", "latin"],
+  weight: ["300", "400", "500", "600"],
+  variable: "--font-sans-th",
+  display: "swap",
+});
+
+const serif = Noto_Serif_Thai({
+  subsets: ["thai", "latin"],
+  variable: "--font-serif-th",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "เข้าสู่ระบบ | Hollywood Stars & Filmography Hub",
@@ -14,55 +29,66 @@ export default async function LoginPage() {
   if (session) redirect(session.role === "ADMIN" ? "/admin" : "/");
 
   return (
-    <main className="grid min-h-screen lg:grid-cols-2">
-      {/* ฝั่งซ้าย: ภาพ/สโลแกน (ซ่อนบนมือถือ) */}
-      <section className="relative hidden overflow-hidden bg-gradient-to-br from-zinc-900 via-slate-950 to-black lg:flex lg:flex-col lg:justify-between lg:p-12">
-        <div className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full bg-amber-500/20 blur-3xl" />
-        <div className="pointer-events-none absolute -right-24 bottom-0 h-96 w-96 rounded-full bg-amber-400/10 blur-3xl" />
+    <main
+      className={`${sans.variable} ${serif.variable} relative isolate flex min-h-screen flex-col overflow-hidden bg-[#05060a] font-[family-name:var(--font-sans-th)] text-white`}
+    >
+      <LoginBackdrop />
 
-        <div className="relative flex items-center gap-2 text-amber-400">
-          <Clapperboard className="h-7 w-7" />
-          <span className="text-lg font-bold tracking-wide">Hollywood Hub</span>
+      {/* โลโก้มุมซ้ายบน */}
+      <header className="px-6 pt-6 sm:px-10 sm:pt-8">
+        <div className="flex items-center gap-2.5 text-amber-400">
+          <Clapperboard className="h-7 w-7" strokeWidth={1.75} />
+          <span className="text-lg font-semibold tracking-[0.12em] uppercase">
+            Hollywood Hub
+          </span>
         </div>
+      </header>
 
-        <div className="relative space-y-4">
-          <div className="flex gap-1 text-amber-400">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star key={i} className="h-5 w-5 fill-current" />
-            ))}
+      <div className="flex flex-1 items-center px-6 py-10 sm:px-10">
+        <div className="mx-auto grid w-full max-w-6xl items-center gap-10 lg:grid-cols-[1.1fr_minmax(0,28rem)] lg:gap-16">
+          {/* ฝั่งซ้าย: หัวข้อ + ดาว + ช่องค้นหา */}
+          <section className="space-y-6">
+            <h2 className="text-4xl leading-[1.15] tracking-tight sm:text-5xl lg:text-6xl">
+              <span className="block font-semibold">ศูนย์รวมข้อมูล</span>
+              <span className="block font-light text-white/90 text-3xl sm:text-4xl lg:text-5xl">
+                ดาราและภาพยนตร์ฮอลลีวูด
+              </span>
+            </h2>
+
+            <div className="flex gap-1.5 text-amber-400" aria-label="5 ดาว">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star
+                  key={i}
+                  className="h-5 w-5 fill-current drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]"
+                />
+              ))}
+            </div>
+
+            <p className="hidden max-w-md text-base leading-relaxed font-light text-zinc-300 sm:block">
+              ค้นหาดาราที่คุณชื่นชอบ สำรวจผลงานภาพยนตร์
+              และติดตามรางวัลระดับโลกได้ในที่เดียว
+            </p>
+
+            {/* ช่องค้นหาแบบตกแต่ง (ยังไม่ใช่ฟอร์มจริง) */}
+            <div
+              aria-hidden
+              className="hidden max-w-md items-center gap-3 rounded-full border border-white/15 bg-white/5 px-5 py-3 text-sm font-light text-white/70 backdrop-blur-md sm:flex"
+            >
+              <Search className="h-4 w-4 text-amber-300" />
+              <span>ค้นหาดารา เช่น Cillian Murphy, Zendaya…</span>
+            </div>
+          </section>
+
+          {/* ฝั่งขวา: การ์ดเข้าสู่ระบบ (จุดโฟกัส) */}
+          <div className="w-full max-w-md justify-self-center lg:justify-self-end">
+            <LoginForm showDemoHint={process.env.NODE_ENV !== "production"} />
           </div>
-          <h2 className="text-4xl leading-tight font-extrabold text-white">
-            ศูนย์รวมข้อมูล
-            <br />
-            <span className="text-amber-400">ดาราและภาพยนตร์ฮอลลีวูด</span>
-          </h2>
-          <p className="max-w-md text-zinc-400">
-            ค้นหาดาราที่คุณชื่นชอบ สำรวจผลงานภาพยนตร์ และติดตามรางวัลระดับโลก
-            ได้ในที่เดียว
-          </p>
         </div>
+      </div>
 
-        <p className="relative text-sm text-zinc-500">
-          © {new Date().getFullYear()} Hollywood Stars &amp; Filmography Hub
-        </p>
-      </section>
-
-      {/* ฝั่งขวา: ฟอร์ม */}
-      <section className="flex items-center justify-center px-6 py-12">
-        <div className="w-full max-w-md">
-          <div className="mb-8 flex items-center gap-2 text-amber-500 lg:hidden dark:text-amber-400">
-            <Clapperboard className="h-6 w-6" />
-            <span className="font-bold tracking-wide">Hollywood Hub</span>
-          </div>
-
-          <h1 className="text-3xl font-extrabold tracking-tight">เข้าสู่ระบบ</h1>
-          <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
-            ยินดีต้อนรับกลับมา กรุณาเข้าสู่ระบบเพื่อดำเนินการต่อ
-          </p>
-
-          <LoginForm showDemoHint={process.env.NODE_ENV !== "production"} />
-        </div>
-      </section>
+      <footer className="px-6 pb-6 text-center text-xs font-light tracking-wide text-white/50">
+        © {new Date().getFullYear()} Hollywood Stars &amp; Filmography Hub
+      </footer>
     </main>
   );
 }
