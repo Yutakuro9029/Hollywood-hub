@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { ThemeToggle } from "@/components/theme-toggle";
+import AuthActions from "@/components/auth-actions";
+import { getSession } from "@/lib/session";
 
 // ดึงข้อมูลสดจาก MySQL ทุกครั้ง (ไม่ให้ build พยายามต่อ DB ตอน build time)
 export const dynamic = "force-dynamic";
@@ -70,6 +72,7 @@ export default async function HomePage({
   searchParams: SearchParams;
 }) {
   const params = await searchParams;
+  const session = await getSession();
   const q = params.q?.trim() ?? "";
   const nationality = params.nationality?.trim() ?? "";
   const genre = params.genre?.trim() ?? "";
@@ -140,13 +143,7 @@ export default async function HomePage({
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle />
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-2 rounded-lg border border-amber-500/70 px-4 py-2 text-sm font-medium text-amber-700 transition hover:bg-amber-400 hover:text-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 dark:border-amber-400/60 dark:text-amber-300"
-            >
-              <LogIn className="h-4 w-4" aria-hidden />
-              เข้าสู่ระบบ
-            </Link>
+            <AuthActions />
           </div>
         </div>
       </header>
@@ -182,13 +179,15 @@ export default async function HomePage({
                 <Film className="h-4 w-4" aria-hidden />
                 ดูรายชื่อดารา
               </a>
-              <Link
-                href="/login"
-                className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-5 py-3 text-sm font-medium text-zinc-700 transition hover:border-amber-500 hover:text-amber-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 dark:border-zinc-700 dark:text-zinc-200 dark:hover:border-amber-400 dark:hover:text-amber-300"
-              >
-                <LogIn className="h-4 w-4" aria-hidden />
-                เข้าสู่ระบบ
-              </Link>
+              {!session && (
+                <Link
+                  href="/login"
+                  className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-5 py-3 text-sm font-medium text-zinc-700 transition hover:border-amber-500 hover:text-amber-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 dark:border-zinc-700 dark:text-zinc-200 dark:hover:border-amber-400 dark:hover:text-amber-300"
+                >
+                  <LogIn className="h-4 w-4" aria-hidden />
+                  เข้าสู่ระบบ
+                </Link>
+              )}
             </div>
           </div>
         </div>
