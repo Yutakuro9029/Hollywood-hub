@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model actors {
+  id           Int       @id @default(autoincrement()) @db.UnsignedInt
+  name         String    @db.VarChar(120)
+  nationality  String?   @db.VarChar(60)
+  birth_date   DateTime? @db.Date
+  bio          String?   @db.Text
+  avatar_url   String?   @db.VarChar(500)
+  awards_count Int       @default(0) @db.UnsignedInt
+  created_at   DateTime  @default(now()) @db.Timestamp(0)
+  movies       movies[]
+
+  @@index([name], map: "idx_actors_name")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model movies {
+  id             Int      @id @default(autoincrement()) @db.UnsignedInt
+  actor_id       Int      @db.UnsignedInt
+  title          String   @db.VarChar(200)
+  release_year   Int?     @db.UnsignedSmallInt
+  genre          String?  @db.VarChar(100)
+  role_name      String?  @db.VarChar(120)
+  box_office_mil Decimal  @default(0.00) @db.Decimal(10, 2)
+  rating         Decimal? @db.Decimal(3, 1)
+  poster_url     String?  @db.VarChar(500)
+  created_at     DateTime @default(now()) @db.Timestamp(0)
+  actors         actors   @relation(fields: [actor_id], references: [id], onDelete: Cascade, map: "fk_movies_actor")
+
+  @@index([actor_id], map: "idx_movies_actor")
+  @@index([title], map: "idx_movies_title")
+}
+
+model users {
+  id            Int        @id @default(autoincrement()) @db.UnsignedInt
+  username      String     @unique(map: "uq_users_username") @db.VarChar(50)
+  email         String     @unique(map: "uq_users_email") @db.VarChar(120)
+  password_hash String     @db.VarChar(255)
+  role          users_role @default(USER)
+  created_at    DateTime   @default(now()) @db.Timestamp(0)
+}
+
+enum users_role {
+  ADMIN
+  USER
+}
