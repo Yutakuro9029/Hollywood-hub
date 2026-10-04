@@ -1,23 +1,11 @@
 import type { Metadata } from "next";
-import { Noto_Serif_Thai, Prompt } from "next/font/google";
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Clapperboard, Search, Star } from "lucide-react";
+import { ArrowLeft, Clapperboard, Search, Star } from "lucide-react";
 import { getSession } from "@/lib/session";
+import { fontSans, fontSerif } from "@/lib/fonts";
 import { LoginBackdrop } from "@/components/login-backdrop";
 import { LoginForm } from "@/components/login-form";
-
-const sans = Prompt({
-  subsets: ["thai", "latin"],
-  weight: ["300", "400", "500", "600"],
-  variable: "--font-sans-th",
-  display: "swap",
-});
-
-const serif = Noto_Serif_Thai({
-  subsets: ["thai", "latin"],
-  variable: "--font-serif-th",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "เข้าสู่ระบบ | Hollywood Stars & Filmography Hub",
@@ -30,18 +18,26 @@ export default async function LoginPage() {
 
   return (
     <main
-      className={`${sans.variable} ${serif.variable} relative isolate flex min-h-screen flex-col overflow-hidden bg-[#05060a] font-[family-name:var(--font-sans-th)] text-white`}
+      className={`${fontSans.variable} ${fontSerif.variable} relative isolate flex min-h-screen flex-col overflow-hidden bg-[#05060a] font-[family-name:var(--font-sans-th)] text-white`}
     >
       <LoginBackdrop />
 
-      {/* โลโก้มุมซ้ายบน */}
-      <header className="px-6 pt-6 sm:px-10 sm:pt-8">
+      {/* โลโก้มุมซ้ายบน + ปุ่มกลับหน้าแรก */}
+      <header className="flex items-center justify-between px-6 pt-6 sm:px-10 sm:pt-8">
         <div className="flex items-center gap-2.5 text-amber-400">
           <Clapperboard className="h-7 w-7" strokeWidth={1.75} />
           <span className="text-lg font-semibold tracking-[0.12em] uppercase">
             Hollywood Hub
           </span>
         </div>
+
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm text-white/80 backdrop-blur-md transition hover:bg-white/20 hover:text-amber-300 focus-visible:ring-2 focus-visible:ring-amber-400/60 focus-visible:outline-none"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          กลับหน้าแรก
+        </Link>
       </header>
 
       <div className="flex flex-1 items-center px-6 py-10 sm:px-10">
@@ -50,7 +46,7 @@ export default async function LoginPage() {
           <section className="space-y-6">
             <h2 className="text-4xl leading-[1.15] tracking-tight sm:text-5xl lg:text-6xl">
               <span className="block font-semibold">ศูนย์รวมข้อมูล</span>
-              <span className="block font-light text-white/90 text-3xl sm:text-4xl lg:text-5xl">
+              <span className="block font-light text-white/90">
                 ดาราและภาพยนตร์ฮอลลีวูด
               </span>
             </h2>
