@@ -1,33 +1,30 @@
-/** ฟังก์ชันจัดรูปแบบ/คำนวณที่ใช้ร่วมกันในหน้า Dashboard (ใช้ได้ทั้ง Server และ Client) */
-
-export const fmtNumber = (n: number, digits = 0) =>
-  n.toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits });
-
-/** ล้านดอลลาร์ -> $850M / $1.45B */
-export const fmtMoney = (m: number) =>
-  m >= 1000 ? `$${fmtNumber(m / 1000, 2)}B` : `$${fmtNumber(m, m < 100 ? 1 : 0)}M`;
-
-export const avg = (xs: number[]) =>
-  xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : null;
-
-/** genre เก็บเป็นสตริงคั่นด้วย comma เช่น "Sci-Fi, Action, Thriller" */
-export const splitGenres = (g: string | null | undefined) =>
-  (g ?? "").split(",").map((x) => x.trim()).filter(Boolean);
-
-export function tally(items: string[]): { label: string; value: number }[] {
-  const map = new Map<string, number>();
-  for (const item of items) map.set(item, (map.get(item) ?? 0) + 1);
-  return [...map.entries()]
-    .map(([label, value]) => ({ label, value }))
-    .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
+/** แปลง Decimal (หรือตัวเลข) ของ Prisma เป็นข้อความทศนิยม 1 ตำแหน่ง */
+export function formatRating(rating: { toString(): string } | null): string {
+  if (rating === null) return "-";
+  const n = Number(rating.toString());
+  return Number.isFinite(n) ? n.toFixed(1) : "-";
 }
 
-export const fmtDate = (d: Date) =>
-  d.toLocaleDateString("th-TH", { dateStyle: "medium", timeZone: "Asia/Bangkok" });
+export function formatNumber(n: number): string {
+  return new Intl.NumberFormat("en-US").format(n);
+}
 
-export const nowTh = () =>
-  new Date().toLocaleString("th-TH", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: "Asia/Bangkok",
-  });
+export function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+}
+
+export function calcAge(birth: Date | null): number | null {
+  if (!birth) return null;
+  const now = new Date();
+  let age = now.getFullYear() - birth.getFullYear();
+  const beforeBirthday =
+    now.getMonth() < birth.getMonth() ||
+    (now.getMonth() === birth.getMonth() && now.getDate() < birth.getDate());
+  if (beforeBirthday) age -= 1;
+  return age;
+}
