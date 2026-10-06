@@ -1,7 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
-import { splitGenres, tally } from "@/lib/format";
-import type { ChartActor, ChartMovie } from "@/components/admin/dashboard-charts";
+import { splitGenres, tally } from "@/lib/dashboard-format";
+import type { ChartActor, ChartMovie } from "@/components/admin/analytics-charts";
 
 /* ======================================================================
  * หน้า "ภาพรวม" (/admin)

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { DollarSign, Medal, Star, Trophy, Users } from "lucide-react";
 import { requireAdmin } from "@/lib/dal";
 import { getRankingsData } from "@/lib/dashboard-data";
-import { fmtMoney, fmtNumber, nowTh } from "@/lib/format";
+import { fmtMoney, fmtNumber, nowTh } from "@/lib/dashboard-format";
 import { PageHeader, Panel, RankBadge, Thumb, rowCls, thCls } from "@/components/admin/dashboard-ui";
 
 export const dynamic = "force-dynamic";

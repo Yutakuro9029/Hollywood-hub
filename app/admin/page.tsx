@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { requireAdmin } from "@/lib/dal";
 import { getOverviewData } from "@/lib/dashboard-data";
-import { fmtMoney, fmtNumber, nowTh } from "@/lib/format";
+import { fmtMoney, fmtNumber, nowTh } from "@/lib/dashboard-format";
 import {
   Highlight,
   KpiCard,

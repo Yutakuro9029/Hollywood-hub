@@ -13,22 +13,18 @@ import {
   Pie,
   PieChart,
   ResponsiveContainer,
-  Scatter,
-  ScatterChart,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
 import {
-  Award,
   BarChart3,
-  Calendar,
   Filter,
-  Globe2,
   PieChart as PieIcon,
   Star,
   Tags,
   TrendingUp,
+  Users,
   X,
 } from "lucide-react";
 
@@ -57,34 +53,20 @@ export type ChartActor = {
  * Helpers
  * ==================================================================== */
 
-type Fmt = "money" | "int" | "rating";
+type Fmt = "money" | "int";
 
-const COLORS = [
-  "#fbbf24", "#0ea5e9", "#8b5cf6", "#10b981",
-  "#f43f5e", "#f97316", "#14b8a6", "#d946ef",
-];
+const COLORS = ["#fbbf24", "#0ea5e9", "#8b5cf6", "#10b981", "#f43f5e", "#f97316"];
 const OTHER = "#a1a1aa";
 const AMBER = "#fbbf24";
+const SKY = "#0ea5e9";
 
 const money = (m: number) =>
   m >= 1000 ? `$${(m / 1000).toFixed(2)}B` : `$${m.toFixed(m < 100 ? 1 : 0)}M`;
-
-const fmt = (kind: Fmt, n: number) =>
-  kind === "money" ? money(n) : kind === "rating" ? n.toFixed(1) : n.toLocaleString("en-US");
-
+const fmt = (kind: Fmt, n: number) => (kind === "money" ? money(n) : n.toLocaleString("en-US"));
 const truncate = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
-
 const avg = (xs: number[]) => (xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : null);
 
-function tally(items: string[]) {
-  const map = new Map<string, number>();
-  for (const i of items) map.set(i, (map.get(i) ?? 0) + 1);
-  return [...map.entries()]
-    .map(([name, value]) => ({ name, value }))
-    .sort((a, b) => b.value - a.value || a.name.localeCompare(b.name));
-}
-
-const card = "rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-slate-900";
+const card = "rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-slate-900";
 
 // สีแกน/กริดอิง currentColor เพื่อให้เปลี่ยนตาม Light/Dark อัตโนมัติ
 const axisProps = {
@@ -111,15 +93,13 @@ function Panel({
 }) {
   return (
     <section className={`${card} flex flex-col ${className}`}>
-      <div className="flex items-start justify-between gap-3 border-b border-zinc-200 px-5 py-4 dark:border-zinc-800">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-zinc-200 px-5 py-4 dark:border-zinc-800">
         <div className="min-w-0">
           <h2 className="flex items-center gap-2 font-semibold">
             <Icon size={18} className={tone} />
             <span className="truncate">{title}</span>
           </h2>
-          {subtitle && (
-            <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{subtitle}</p>
-          )}
+          {subtitle && <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{subtitle}</p>}
         </div>
         {action}
       </div>
@@ -160,7 +140,7 @@ function Segmented<T extends string>({
   );
 }
 
-/* ---------- Tooltips ---------- */
+/* ---------- Tooltip ---------- */
 
 const tipBox =
   "rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-800 shadow-lg dark:border-zinc-700 dark:bg-slate-800 dark:text-zinc-100";
@@ -201,26 +181,6 @@ function Tip({
   );
 }
 
-type ScatterDatum = { title: string; rating: number; box: number; actor: string; year: number | null };
-
-function ScatterTip({ active, payload }: { active?: boolean; payload?: readonly { payload?: ScatterDatum }[] }) {
-  const d = payload?.[0]?.payload;
-  if (!active || !d) return null;
-  return (
-    <div className={tipBox}>
-      <p className="font-semibold">{d.title}</p>
-      <p className="text-zinc-500 dark:text-zinc-400">
-        {d.actor}
-        {d.year ? ` · ${d.year}` : ""}
-      </p>
-      <p className="mt-1">
-        เรตติ้ง <span className="font-semibold">{d.rating.toFixed(1)}</span> · Box Office{" "}
-        <span className="font-semibold">{money(d.box)}</span>
-      </p>
-    </div>
-  );
-}
-
 /* ---------- Donut ---------- */
 
 function Donut({
@@ -241,7 +201,7 @@ function Donut({
     hover !== null ? hover !== i : selected ? data[i].name !== selected : false;
 
   return (
-    <div className="flex flex-col items-center gap-5 sm:flex-row">
+    <div className="flex flex-col items-center gap-5">
       <div className="relative h-44 w-44 shrink-0">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
@@ -274,13 +234,11 @@ function Donut({
           <span className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
             {hovered ? hovered.value : total}
           </span>
-          <span className="max-w-[5.5rem] truncate text-[10px]">
-            {hovered ? hovered.name : centerLabel}
-          </span>
+          <span className="max-w-[5.5rem] truncate text-[10px]">{hovered ? hovered.name : centerLabel}</span>
         </div>
       </div>
 
-      <ul className="w-full min-w-0 flex-1 space-y-1 text-sm">
+      <ul className="w-full space-y-1 text-sm">
         {data.map((d, i) => {
           const active = selected === d.name;
           const clickable = !!onSelect && !d.other;
@@ -311,30 +269,30 @@ function Donut({
   );
 }
 
-/* ---------- Horizontal bar ---------- */
+/* ---------- Bars ---------- */
 
 type BarDatum = { key: string; name: string; value: number; color: string; active?: boolean; extra?: string[] };
 
 function HBar({
-  data, kind, seriesName, domain, onPick,
+  data, kind, seriesName, onPick,
 }: {
   data: BarDatum[];
   kind: Fmt;
   seriesName: string;
-  domain?: [number, number];
   onPick?: (key: string) => void;
 }) {
   if (data.length === 0) return <Empty />;
   return (
-    <ResponsiveContainer width="100%" height={Math.max(220, data.length * 46)}>
-      <BarChart data={data} layout="vertical" margin={{ top: 4, right: 28, bottom: 4, left: 4 }}>
+    <ResponsiveContainer width="100%" height={Math.max(220, data.length * 38)}>
+      <BarChart data={data} layout="vertical" margin={{ top: 4, right: 40, bottom: 4, left: 4 }}>
         <CartesianGrid {...grid} horizontal={false} />
-        <XAxis type="number" domain={domain} tickFormatter={(v: number) => fmt(kind, v)} {...axisProps} />
+        <XAxis type="number" tickFormatter={(v: number) => fmt(kind, v)} {...axisProps} />
         <YAxis
           type="category"
           dataKey="name"
-          width={112}
-          tickFormatter={(v: string) => truncate(v, 15)}
+          width={120}
+          interval={0}
+          tickFormatter={(v: string) => truncate(v, 16)}
           {...axisProps}
         />
         <Tooltip cursor={{ fill: "currentColor", fillOpacity: 0.06 }} content={<Tip kind={kind} />} />
@@ -361,42 +319,20 @@ function HBar({
   );
 }
 
-/* ---------- Column ---------- */
-
-function Column({
-  data, kind, seriesName, onPick,
-}: {
-  data: BarDatum[];
-  kind: Fmt;
-  seriesName: string;
-  onPick?: (key: string) => void;
-}) {
-  if (data.length === 0) return <Empty />;
+function Column({ data, seriesName }: { data: BarDatum[]; seriesName: string }) {
+  if (data.every((d) => d.value === 0)) return <Empty />;
   return (
-    <ResponsiveContainer width="100%" height={260}>
+    <ResponsiveContainer width="100%" height={300}>
       <BarChart data={data} margin={{ top: 22, right: 8, bottom: 4, left: -8 }}>
         <CartesianGrid {...grid} vertical={false} />
-        <XAxis dataKey="name" interval={0} tickFormatter={(v: string) => truncate(v, 9)} {...axisProps} />
-        <YAxis allowDecimals={false} tickFormatter={(v: number) => fmt(kind, v)} {...axisProps} />
-        <Tooltip cursor={{ fill: "currentColor", fillOpacity: 0.06 }} content={<Tip kind={kind} />} />
-        <Bar
-          dataKey="value"
-          name={seriesName}
-          radius={[6, 6, 0, 0]}
-          maxBarSize={56}
-          cursor={onPick ? "pointer" : "default"}
-          onClick={(_, i) => onPick?.(data[i].key)}
-        >
+        <XAxis dataKey="name" interval={0} {...axisProps} />
+        <YAxis allowDecimals={false} {...axisProps} />
+        <Tooltip cursor={{ fill: "currentColor", fillOpacity: 0.06 }} content={<Tip kind="int" />} />
+        <Bar dataKey="value" name={seriesName} radius={[6, 6, 0, 0]} maxBarSize={56}>
           {data.map((d) => (
-            <Cell key={d.key} fill={d.color} fillOpacity={d.active === false ? 0.25 : 1} />
+            <Cell key={d.key} fill={d.color} />
           ))}
-          <LabelList
-            dataKey="value"
-            position="top"
-            fill="currentColor"
-            fontSize={11}
-            formatter={(v: unknown) => fmt(kind, Number(v))}
-          />
+          <LabelList dataKey="value" position="top" fill="currentColor" fontSize={11} />
         </Bar>
       </BarChart>
     </ResponsiveContainer>
@@ -404,8 +340,11 @@ function Column({
 }
 
 /* ======================================================================
- * Main component
+ * Main component — เหลือกราฟที่สำคัญ 4 แบบ
+ *   1) แนวโน้มรายปี  2) สัดส่วน Genre  3) Top 10 ดารา  4) การกระจายเรตติ้ง
  * ==================================================================== */
+
+const TOP_N = 10;
 
 const BUCKETS = [
   { name: "< 5", test: (r: number) => r < 5 },
@@ -416,6 +355,12 @@ const BUCKETS = [
   { name: "9–10", test: (r: number) => r >= 9 },
 ];
 
+const ACTOR_METRICS = {
+  box: { label: "Box Office", kind: "money" as Fmt },
+  awards: { label: "รางวัล", kind: "int" as Fmt },
+  movies: { label: "จำนวนหนัง", kind: "int" as Fmt },
+};
+
 export default function DashboardCharts({
   movies,
   actors,
@@ -423,36 +368,31 @@ export default function DashboardCharts({
   movies: ChartMovie[];
   actors: ChartActor[];
 }) {
-  const [selected, setSelected] = useState<number[]>([]); // ดาราที่เลือก (ว่าง = ทั้งหมด)
   const [genre, setGenre] = useState<string | null>(null);
+  const [actorKey, setActorKey] = useState<string | null>(null); // ใช้ชื่อดาราเป็นคีย์ (รวมแถวที่ชื่อซ้ำ)
   const [metric, setMetric] = useState<"box" | "count">("box");
   const [mode, setMode] = useState<"area" | "bar">("area");
+  const [actorMetric, setActorMetric] = useState<keyof typeof ACTOR_METRICS>("box");
 
-  const colorMap = useMemo(
-    () => new Map(actors.map((a, i) => [a.id, COLORS[i % COLORS.length]])),
-    [actors],
-  );
-  const colorOf = (id: number) => colorMap.get(id) ?? OTHER;
-  const isActive = (id: number) => selected.length === 0 || selected.includes(id);
+  const nameOf = useMemo(() => new Map(actors.map((a) => [a.id, a.name])), [actors]);
 
-  const toggleActor = (id: number) =>
-    setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
   const toggleGenre = (g: string) => setGenre((cur) => (cur === g ? null : g));
+  const toggleActor = (name: string) => setActorKey((cur) => (cur === name ? null : name));
   const reset = () => {
-    setSelected([]);
     setGenre(null);
+    setActorKey(null);
   };
 
   /* ---- ชุดข้อมูลหลังกรอง ---- */
-  // byGenre: กรองเฉพาะ genre (ใช้กับกราฟรายดารา เพื่อให้คลิกเลือกดาราอื่นได้)
+  // byGenre: กรองเฉพาะ genre (ใช้กับกราฟดารา เพื่อให้คลิกเปลี่ยนดาราได้)
   const byGenre = useMemo(
     () => (genre ? movies.filter((m) => m.genres.includes(genre)) : movies),
     [movies, genre],
   );
   // byActor: กรองเฉพาะดารา (ใช้กับ donut genre เพื่อให้เปลี่ยน genre ได้)
   const byActor = useMemo(
-    () => (selected.length ? movies.filter((m) => selected.includes(m.actorId)) : movies),
-    [movies, selected],
+    () => (actorKey !== null ? movies.filter((m) => nameOf.get(m.actorId) === actorKey) : movies),
+    [movies, actorKey, nameOf],
   );
   // filtered: กรองทั้งสองอย่าง
   const filtered = useMemo(
@@ -460,17 +400,12 @@ export default function DashboardCharts({
     [byActor, genre],
   );
 
-  /* ---- Summary ---- */
   const summary = useMemo(() => {
     const rated = filtered.flatMap((m) => (m.rating === null ? [] : [m.rating]));
-    return {
-      count: filtered.length,
-      box: filtered.reduce((s, m) => s + m.box, 0),
-      rating: avg(rated),
-    };
+    return { count: filtered.length, box: filtered.reduce((s, m) => s + m.box, 0), rating: avg(rated) };
   }, [filtered]);
 
-  /* ---- รายปี ---- */
+  /* ---- 1) รายปี ---- */
   const yearData = useMemo(() => {
     const map = new Map<number, { box: number; count: number }>();
     for (const m of filtered) {
@@ -485,9 +420,13 @@ export default function DashboardCharts({
       .map(([year, v]) => ({ year: String(year), ...v }));
   }, [filtered]);
 
-  /* ---- Genre donut (top 6 + อื่นๆ) ---- */
+  /* ---- 2) Genre (top 6 + อื่นๆ) ---- */
   const genreData = useMemo(() => {
-    const all = tally(byActor.flatMap((m) => m.genres));
+    const map = new Map<string, number>();
+    for (const m of byActor) for (const g of m.genres) map.set(g, (map.get(g) ?? 0) + 1);
+    const all = [...map.entries()]
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value || a.name.localeCompare(b.name));
     const top: { name: string; value: number; other?: boolean }[] = all.slice(0, 6);
     // ถ้ากำลังกรอง genre ที่อยู่นอก top 6 ให้ยังแสดงเป็นชิ้นของตัวเอง
     if (genre && !top.some((t) => t.name === genre)) {
@@ -500,180 +439,102 @@ export default function DashboardCharts({
     return top;
   }, [byActor, genre]);
 
-  /* ---- Box office / จำนวนหนัง / เรตติ้งเฉลี่ย ต่อดารา ---- */
-  const perActor = useMemo(
-    () =>
-      actors.map((a) => {
-        const ms = byGenre.filter((m) => m.actorId === a.id);
-        const rated = ms.flatMap((m) => (m.rating === null ? [] : [m.rating]));
-        return {
-          id: a.id,
-          name: a.name,
-          awards: a.awards,
-          nationality: a.nationality,
-          box: ms.reduce((s, m) => s + m.box, 0),
-          avgRating: avg(rated),
-        };
-      }),
-    [actors, byGenre],
-  );
+  /* ---- 3) Top 10 ดารา (สลับตัวชี้วัดได้) ---- */
+  const actorBars: BarDatum[] = useMemo(() => {
+    // รวมดาราที่ชื่อซ้ำกัน (ข้อมูลอาจมีแถวซ้ำ) ให้เป็นแท่งเดียว
+    const agg = new Map<string, { box: number; movies: number; awards: number }>();
+    for (const a of actors) {
+      const cur = agg.get(a.name) ?? { box: 0, movies: 0, awards: 0 };
+      cur.awards = Math.max(cur.awards, a.awards);
+      agg.set(a.name, cur);
+    }
+    for (const m of byGenre) {
+      const name = nameOf.get(m.actorId);
+      const cur = name !== undefined ? agg.get(name) : undefined;
+      if (!cur) continue;
+      cur.box += m.box;
+      cur.movies += 1;
+    }
+    const rows = [...agg.entries()]
+      .map(([name, v]) => ({ name, value: v[actorMetric] }))
+      .filter((r) => r.value > 0)
+      .sort((a, b) => b.value - a.value || a.name.localeCompare(b.name));
 
-  const boxBars: BarDatum[] = useMemo(
-    () =>
-      [...perActor]
-        .sort((a, b) => b.box - a.box)
-        .map((a) => ({
-          key: String(a.id), name: a.name, value: a.box,
-          color: colorOf(a.id), active: isActive(a.id),
-        })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [perActor, selected, colorMap],
-  );
+    const top = rows.slice(0, TOP_N);
+    // ดาราที่เลือกอยู่แต่ไม่อยู่ใน Top 10 ให้ยังแสดงต่อท้าย
+    const sel = actorKey !== null ? rows.find((r) => r.name === actorKey) : undefined;
+    if (sel && !top.some((r) => r.name === sel.name)) top.push(sel);
 
-  const awardBars: BarDatum[] = useMemo(
-    () =>
-      [...actors]
-        .sort((a, b) => b.awards - a.awards)
-        .slice(0, 8)
-        .map((a) => ({
-          key: String(a.id), name: a.name.split(" ")[0], value: a.awards,
-          color: colorOf(a.id), active: isActive(a.id),
-        })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [actors, selected, colorMap],
-  );
+    return top.map((r) => ({
+      key: r.name,
+      name: r.name,
+      value: r.value,
+      color: AMBER,
+      active: actorKey === null || actorKey === r.name,
+    }));
+  }, [actors, byGenre, nameOf, actorMetric, actorKey]);
 
-  const ratingBars: BarDatum[] = useMemo(
-    () =>
-      perActor
-        .flatMap((a) => (a.avgRating === null ? [] : [{ ...a, avgRating: a.avgRating }]))
-        .sort((a, b) => b.avgRating - a.avgRating)
-        .map((a) => ({
-          key: String(a.id), name: a.name, value: a.avgRating,
-          color: colorOf(a.id), active: isActive(a.id),
-        })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [perActor, selected, colorMap],
-  );
-
-  /* ---- Scatter: แยกซีรีส์ตามดารา ---- */
-  const scatter = useMemo(() => {
-    const series = actors
-      .map((a) => ({
-        id: a.id,
-        name: a.name,
-        color: colorOf(a.id),
-        data: filtered.flatMap((m): ScatterDatum[] =>
-          m.actorId === a.id && m.rating !== null
-            ? [{ title: m.title, rating: m.rating, box: m.box, actor: a.name, year: m.year }]
-            : [],
-        ),
-      }))
-      .filter((s) => s.data.length > 0);
-    const xs = series.flatMap((s) => s.data.map((d) => d.rating));
-    const domain: [number, number] = xs.length
-      ? [Math.max(0, Math.floor(Math.min(...xs) - 0.5)), Math.min(10, Math.ceil(Math.max(...xs) + 0.5))]
-      : [0, 10];
-    return { series, domain };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [actors, filtered, colorMap]);
-
-  /* ---- Histogram เรตติ้ง (tooltip แสดงรายชื่อหนังในช่วง) ---- */
+  /* ---- 4) Histogram เรตติ้ง ---- */
   const histogram: BarDatum[] = useMemo(() => {
     const rated = filtered.flatMap((m) => (m.rating === null ? [] : [{ ...m, rating: m.rating }]));
     return BUCKETS.map((b) => {
       const inBucket = rated.filter((m) => b.test(m.rating));
       return {
-        key: b.name, name: b.name, value: inBucket.length, color: "#0ea5e9",
+        key: b.name,
+        name: b.name,
+        value: inBucket.length,
+        color: SKY,
         extra: inBucket.map((m) => `${m.title} (${m.rating.toFixed(1)})`),
       };
     });
   }, [filtered]);
 
-  /* ---- รายทศวรรษ ---- */
-  const decades: BarDatum[] = useMemo(() => {
-    const map = new Map<number, string[]>();
-    for (const m of filtered) {
-      if (m.year === null) continue;
-      const d = Math.floor(m.year / 10) * 10;
-      map.set(d, [...(map.get(d) ?? []), m.title]);
-    }
-    return [...map.entries()]
-      .sort((a, b) => a[0] - b[0])
-      .map(([d, titles]) => ({
-        key: String(d), name: `${d}s`, value: titles.length, color: "#8b5cf6", extra: titles,
-      }));
-  }, [filtered]);
-
-  /* ---- สัญชาติ ---- */
-  const nationalityData = useMemo(
-    () => tally(actors.filter((a) => isActive(a.id)).map((a) => a.nationality ?? "ไม่ระบุ")),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [actors, selected],
-  );
-
-  const hasFilter = selected.length > 0 || genre !== null;
-
-  const chip = (on: boolean) =>
-    `inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition ${
-      on
-        ? "border-amber-400 bg-amber-400/10 text-amber-700 dark:text-amber-300"
-        : "border-zinc-300 text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-    }`;
+  const hasFilter = genre !== null || actorKey !== null;
+  const chip =
+    "inline-flex items-center gap-1.5 rounded-full border border-amber-400 bg-amber-400/10 px-3 py-1 text-xs font-medium text-amber-700 transition hover:bg-amber-400/20 dark:text-amber-300";
+  const strong = "font-semibold text-zinc-800 dark:text-zinc-100";
 
   return (
     <div className="space-y-6">
-      {/* ---------------- Filter bar ---------------- */}
-      <section className={`${card} p-4`} aria-label="ตัวกรองกราฟ">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="mr-1 inline-flex items-center gap-1.5 text-sm font-medium">
-            <Filter size={16} className="text-amber-400" /> ตัวกรอง
+      {/* ---------------- Filter / summary bar ---------------- */}
+      <section className={`${card} flex flex-wrap items-center gap-x-3 gap-y-2 p-4`} aria-label="ตัวกรองกราฟ">
+        <span className="inline-flex items-center gap-1.5 text-sm font-medium">
+          <Filter size={16} className="text-amber-400" /> ตัวกรอง
+        </span>
+
+        {!hasFilter && (
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+            คลิกชิ้น Genre หรือแท่งดาราเพื่อกรองทุกกราฟ
           </span>
+        )}
+        {genre && (
+          <button type="button" onClick={() => setGenre(null)} className={chip}>
+            <Tags size={12} /> {genre} <X size={12} />
+          </button>
+        )}
+        {actorKey !== null && (
+          <button type="button" onClick={() => setActorKey(null)} className={chip}>
+            <Users size={12} /> {actorKey} <X size={12} />
+          </button>
+        )}
+        {hasFilter && (
+          <button
+            type="button"
+            onClick={reset}
+            className="text-xs font-medium text-amber-600 hover:text-amber-500 dark:text-amber-400"
+          >
+            ล้างตัวกรอง
+          </button>
+        )}
 
-          {actors.map((a) => (
-            <button
-              key={a.id}
-              type="button"
-              aria-pressed={selected.includes(a.id)}
-              onClick={() => toggleActor(a.id)}
-              className={chip(selected.includes(a.id))}
-            >
-              <span className="h-2 w-2 rounded-full" style={{ background: colorOf(a.id) }} />
-              {a.name}
-            </button>
-          ))}
-
-          {genre && (
-            <button type="button" onClick={() => setGenre(null)} className={chip(true)}>
-              <Tags size={12} /> {genre} <X size={12} />
-            </button>
-          )}
-
-          {hasFilter && (
-            <button
-              type="button"
-              onClick={reset}
-              className="ml-auto text-xs font-medium text-amber-600 hover:text-amber-500 dark:text-amber-400"
-            >
-              ล้างตัวกรองทั้งหมด
-            </button>
-          )}
-        </div>
-
-        <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
-          กำลังแสดง <span className="font-semibold text-zinc-800 dark:text-zinc-100">{summary.count}</span> /{" "}
-          {movies.length} เรื่อง · Box Office{" "}
-          <span className="font-semibold text-zinc-800 dark:text-zinc-100">{money(summary.box)}</span> · เรตติ้งเฉลี่ย{" "}
-          <span className="font-semibold text-zinc-800 dark:text-zinc-100">
-            {summary.rating !== null ? summary.rating.toFixed(2) : "-"}
-          </span>
-          <span className="ml-2 hidden sm:inline">
-            · คลิกชื่อดารา, แท่งกราฟ หรือชิ้น Genre เพื่อกรองทุกกราฟ
-          </span>
+        <p className="w-full text-xs text-zinc-500 dark:text-zinc-400 lg:ml-auto lg:w-auto">
+          แสดง <span className={strong}>{summary.count}</span> / {movies.length} เรื่อง · Box Office{" "}
+          <span className={strong}>{money(summary.box)}</span> · เรตติ้งเฉลี่ย{" "}
+          <span className={strong}>{summary.rating !== null ? summary.rating.toFixed(2) : "-"}</span>
         </p>
       </section>
 
-      {/* ---------------- Row 1 ---------------- */}
+      {/* ---------------- Row 1: แนวโน้ม + Genre ---------------- */}
       <div className="grid gap-6 xl:grid-cols-3">
         <Panel
           title="แนวโน้มรายปีที่ฉาย"
@@ -682,7 +543,7 @@ export default function DashboardCharts({
           tone="text-amber-400"
           className="xl:col-span-2"
           action={
-            <div className="flex flex-wrap justify-end gap-2">
+            <div className="flex flex-wrap gap-2">
               <Segmented
                 value={metric}
                 onChange={setMetric}
@@ -705,7 +566,7 @@ export default function DashboardCharts({
           {yearData.length === 0 ? (
             <Empty />
           ) : (
-            <ResponsiveContainer width="100%" height={320}>
+            <ResponsiveContainer width="100%" height={340}>
               {mode === "area" ? (
                 <AreaChart data={yearData} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
                   <defs>
@@ -715,7 +576,7 @@ export default function DashboardCharts({
                     </linearGradient>
                   </defs>
                   <CartesianGrid {...grid} vertical={false} />
-                  <XAxis dataKey="year" {...axisProps} />
+                  <XAxis dataKey="year" minTickGap={24} {...axisProps} />
                   <YAxis
                     allowDecimals={false}
                     tickFormatter={(v: number) => fmt(metric === "box" ? "money" : "int", v)}
@@ -729,7 +590,7 @@ export default function DashboardCharts({
                     stroke={AMBER}
                     strokeWidth={2.5}
                     fill="url(#yearFill)"
-                    dot={{ r: 3, fill: AMBER, strokeWidth: 0 }}
+                    dot={yearData.length > 30 ? false : { r: 3, fill: AMBER, strokeWidth: 0 }}
                     activeDot={{ r: 6 }}
                   />
                   {yearData.length > 6 && (
@@ -739,7 +600,7 @@ export default function DashboardCharts({
               ) : (
                 <BarChart data={yearData} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
                   <CartesianGrid {...grid} vertical={false} />
-                  <XAxis dataKey="year" {...axisProps} />
+                  <XAxis dataKey="year" minTickGap={24} {...axisProps} />
                   <YAxis
                     allowDecimals={false}
                     tickFormatter={(v: number) => fmt(metric === "box" ? "money" : "int", v)}
@@ -766,8 +627,8 @@ export default function DashboardCharts({
         </Panel>
 
         <Panel
-          title="สัดส่วนตามประเภท (Genre)"
-          subtitle="คลิกเพื่อกรองทุกกราฟ · หนัง 1 เรื่องนับได้หลายประเภท"
+          title="สัดส่วนตามประเภท"
+          subtitle="6 อันดับแรก · คลิกเพื่อกรอง"
           icon={PieIcon}
           tone="text-violet-500"
         >
@@ -775,109 +636,39 @@ export default function DashboardCharts({
         </Panel>
       </div>
 
-      {/* ---------------- Row 2 ---------------- */}
+      {/* ---------------- Row 2: Top ดารา + เรตติ้ง ---------------- */}
       <div className="grid gap-6 lg:grid-cols-2">
         <Panel
-          title="Box Office รวมแยกตามดารา"
-          subtitle="คลิกแท่งเพื่อเลือก/ยกเลิกดารา"
+          title={`Top ${TOP_N} ดารา`}
+          subtitle="คลิกแท่งเพื่อกรองเฉพาะดาราคนนั้น"
           icon={BarChart3}
           tone="text-emerald-500"
+          action={
+            <Segmented
+              value={actorMetric}
+              onChange={setActorMetric}
+              options={(Object.keys(ACTOR_METRICS) as (keyof typeof ACTOR_METRICS)[]).map((k) => ({
+                value: k,
+                label: ACTOR_METRICS[k].label,
+              }))}
+            />
+          }
         >
           <HBar
-            data={boxBars}
-            kind="money"
-            seriesName="Box Office"
-            onPick={(k) => toggleActor(Number(k))}
+            data={actorBars}
+            kind={ACTOR_METRICS[actorMetric].kind}
+            seriesName={ACTOR_METRICS[actorMetric].label}
+            onPick={(k) => toggleActor(k)}
           />
-        </Panel>
-
-        <Panel
-          title="จำนวนรางวัลแยกตามดารา"
-          subtitle="สูงสุด 8 อันดับ · คลิกแท่งเพื่อเลือกดารา"
-          icon={Award}
-          tone="text-amber-400"
-        >
-          <Column
-            data={awardBars}
-            kind="int"
-            seriesName="รางวัล"
-            onPick={(k) => toggleActor(Number(k))}
-          />
-        </Panel>
-      </div>
-
-      {/* ---------------- Row 3 ---------------- */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Panel
-          title="เรตติ้ง vs Box Office"
-          subtitle="1 จุด = หนัง 1 เรื่อง · สีตามดารา · ชี้เมาส์ดูรายละเอียด"
-          icon={Star}
-          tone="text-rose-500"
-        >
-          {scatter.series.length === 0 ? (
-            <Empty />
-          ) : (
-            <ResponsiveContainer width="100%" height={320}>
-              <ScatterChart margin={{ top: 12, right: 20, bottom: 8, left: 0 }}>
-                <CartesianGrid {...grid} />
-                <XAxis
-                  type="number"
-                  dataKey="rating"
-                  name="เรตติ้ง"
-                  domain={scatter.domain}
-                  tickCount={scatter.domain[1] - scatter.domain[0] + 1}
-                  {...axisProps}
-                />
-                <YAxis
-                  type="number"
-                  dataKey="box"
-                  name="Box Office"
-                  tickFormatter={(v: number) => money(v)}
-                  {...axisProps}
-                />
-                <Tooltip cursor={{ strokeDasharray: "3 3" }} content={<ScatterTip />} />
-                {scatter.series.map((s) => (
-                  <Scatter key={s.id} name={s.name} data={s.data} fill={s.color} fillOpacity={0.85} />
-                ))}
-              </ScatterChart>
-            </ResponsiveContainer>
-          )}
         </Panel>
 
         <Panel
           title="การกระจายคะแนนเรตติ้ง"
           subtitle="ชี้แท่งเพื่อดูรายชื่อหนังในช่วงคะแนนนั้น"
-          icon={BarChart3}
+          icon={Star}
           tone="text-sky-500"
         >
-          <Column data={histogram} kind="int" seriesName="จำนวนหนัง" />
-        </Panel>
-      </div>
-
-      {/* ---------------- Row 4 ---------------- */}
-      <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
-        <Panel title="ดาราตามสัญชาติ" icon={Globe2} tone="text-sky-500">
-          <Donut data={nationalityData} centerLabel="คน" />
-        </Panel>
-
-        <Panel title="จำนวนหนังรายทศวรรษ" subtitle="ชี้แท่งเพื่อดูรายชื่อหนัง" icon={Calendar} tone="text-violet-500">
-          <Column data={decades} kind="int" seriesName="จำนวนหนัง" />
-        </Panel>
-
-        <Panel
-          title="เรตติ้งเฉลี่ยของดารา"
-          subtitle="เฉลี่ยจากหนังที่มีคะแนน (เต็ม 10) · คลิกเพื่อเลือกดารา"
-          icon={Star}
-          tone="text-amber-400"
-          className="lg:col-span-2 xl:col-span-1"
-        >
-          <HBar
-            data={ratingBars}
-            kind="rating"
-            seriesName="เรตติ้งเฉลี่ย"
-            domain={[0, 10]}
-            onPick={(k) => toggleActor(Number(k))}
-          />
+          <Column data={histogram} seriesName="จำนวนหนัง" />
         </Panel>
       </div>
     </div>

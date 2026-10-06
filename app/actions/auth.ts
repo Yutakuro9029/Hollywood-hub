@@ -4,7 +4,11 @@ import bcrypt from "bcryptjs";
 import { Prisma } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { createSession, deleteSession, type SessionPayload } from "@/lib/session";
+import {
+  createSession,
+  deleteSession,
+  type SessionPayload,
+} from "@/lib/session";
 import { FieldError, reqText, toErrorState } from "@/lib/form";
 
 export interface LoginState {
@@ -79,7 +83,9 @@ export async function register(
   try {
     const username = reqText(formData, "username", "ชื่อผู้ใช้", 50);
     if (username.length < 3 || /\s/.test(username)) {
-      throw new FieldError("ชื่อผู้ใช้ต้องมีอย่างน้อย 3 ตัวอักษรและห้ามมีช่องว่าง");
+      throw new FieldError(
+        "ชื่อผู้ใช้ต้องมีอย่างน้อย 3 ตัวอักษรและห้ามมีช่องว่าง",
+      );
     }
 
     const email = reqText(formData, "email", "อีเมล", 120).toLowerCase();
@@ -119,7 +125,10 @@ export async function register(
     session = { userId: user.id, username: user.username, role: user.role };
   } catch (e) {
     // สมัครพร้อมกัน 2 คำขอ: unique constraint ใน DB ชนกัน
-    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+    if (
+      e instanceof Prisma.PrismaClientKnownRequestError &&
+      e.code === "P2002"
+    ) {
       return { error: "ชื่อผู้ใช้หรืออีเมลนี้ถูกใช้แล้ว", values };
     }
     return { error: toErrorState(e).error, values };
@@ -132,5 +141,5 @@ export async function register(
 
 export async function logout(): Promise<void> {
   await deleteSession();
-  redirect("/login");
+  redirect("/");
 }

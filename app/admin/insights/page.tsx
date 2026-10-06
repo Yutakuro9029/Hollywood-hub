@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { requireAdmin } from "@/lib/dal";
 import { getInsightsData } from "@/lib/dashboard-data";
-import { fmtDate, nowTh } from "@/lib/format";
+import { fmtDate, nowTh, topWithOther } from "@/lib/dashboard-format";
 import { BarRows, PageHeader, Panel, Thumb, rowCls } from "@/components/admin/dashboard-ui";
 
 export const dynamic = "force-dynamic";
@@ -140,11 +140,11 @@ export default async function AdminInsightsPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Panel title="จำนวนหนังแยกตามประเภท" subtitle="หนัง 1 เรื่องนับได้หลายประเภท" icon={Tags} tone="text-violet-500">
-          <BarRows rows={d.genres} format={(n) => `${n} เรื่อง`} barClass="bg-violet-500" />
+        <Panel title="จำนวนหนังแยกตามประเภท" subtitle="8 อันดับแรก · หนัง 1 เรื่องนับได้หลายประเภท" icon={Tags} tone="text-violet-500">
+          <BarRows rows={topWithOther(d.genres, 8)} format={(n) => `${n} เรื่อง`} barClass="bg-violet-500" />
         </Panel>
-        <Panel title="ดาราแยกตามสัญชาติ" icon={Globe2} tone="text-sky-500">
-          <BarRows rows={d.nationalities} format={(n) => `${n} คน`} barClass="bg-sky-500" />
+        <Panel title="ดาราแยกตามสัญชาติ" subtitle="6 อันดับแรก" icon={Globe2} tone="text-sky-500">
+          <BarRows rows={topWithOther(d.nationalities, 6)} format={(n) => `${n} คน`} barClass="bg-sky-500" />
         </Panel>
       </div>
     </div>

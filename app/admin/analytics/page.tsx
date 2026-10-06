@@ -2,9 +2,9 @@ import Link from "next/link";
 import { Clapperboard, UserCog } from "lucide-react";
 import { requireAdmin } from "@/lib/dal";
 import { getAnalyticsData } from "@/lib/dashboard-data";
-import { nowTh } from "@/lib/format";
+import { nowTh } from "@/lib/dashboard-format";
 import { PageHeader, quickBtn } from "@/components/admin/dashboard-ui";
-import DashboardCharts from "@/components/admin/dashboard-charts";
+import DashboardCharts from "@/components/admin/analytics-charts";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +16,7 @@ export default async function AdminAnalyticsPage() {
     <div className="space-y-6">
       <PageHeader
         title="วิเคราะห์เชิงกราฟ"
-        description="กราฟแบบ interactive — คลิกชื่อดารา แท่งกราฟ หรือชิ้นของ Genre เพื่อกรองข้อมูลทุกกราฟพร้อมกัน"
+        description="กราฟสำคัญ 4 แบบ — คลิกชิ้นของ Genre หรือแท่งดาราเพื่อกรองข้อมูลทุกกราฟพร้อมกัน"
         updatedAt={nowTh()}
         actions={
           <>
