@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Film, Star } from "lucide-react";
 import { formatRating } from "@/lib/format";
 
@@ -18,7 +19,7 @@ export function MovieCard({
   actorNames: string[];
 }) {
   return (
-    <article className="group">
+    <article className="group relative rounded-xl has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-amber-400 has-[a:focus-visible]:ring-offset-2 has-[a:focus-visible]:ring-offset-zinc-50 dark:has-[a:focus-visible]:ring-offset-slate-950">
       <div className="relative aspect-[2/3] overflow-hidden rounded-xl border border-zinc-200 bg-gradient-to-br from-zinc-200 to-zinc-300 shadow-sm transition duration-200 group-hover:-translate-y-1 group-hover:border-amber-400/70 group-hover:shadow-lg dark:border-zinc-800 dark:from-zinc-800 dark:to-slate-900 dark:shadow-none">
         {/* fallback: แสดงใต้โปสเตอร์ ถ้ารูปโหลดไม่ได้ (alt ว่าง) จะเห็นไอคอนกับชื่อเรื่องแทน */}
         <div
@@ -49,7 +50,13 @@ export function MovieCard({
 
       <div className="mt-3 space-y-0.5">
         <h3 className="line-clamp-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-          {movie.title}
+          {/* stretched link: คลิกตรงไหนของการ์ดก็ไปหน้ารายละเอียด */}
+          <Link
+            href={`/movies/${movie.id}`}
+            className="after:absolute after:inset-0 focus:outline-none"
+          >
+            {movie.title}
+          </Link>
         </h3>
         <p className="truncate text-xs text-zinc-600 dark:text-zinc-400">
           {movie.release_year ?? "-"}

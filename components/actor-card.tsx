@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Award, Film, Globe2, Star } from "lucide-react";
 import { calcAge, formatRating, getInitials } from "@/lib/format";
 
@@ -24,7 +25,7 @@ export function ActorCard({ actor }: { actor: ActorCardData }) {
   const age = calcAge(actor.birth_date);
 
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition hover:border-amber-400/70 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none dark:hover:border-amber-400/50">
+    <article className="relative flex h-full flex-col overflow-hidden rounded-2xl has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-amber-400 border border-zinc-200 bg-white shadow-sm transition hover:border-amber-400/70 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none dark:hover:border-amber-400/50">
       <div className="flex items-center gap-4 p-5">
         {/* ตัวอักษรย่อวางใต้รูป ถ้ารูปโหลดไม่ได้ (alt ว่าง) จะเห็นตัวอักษรย่อแทน */}
         <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-zinc-100 to-zinc-200 ring-2 ring-amber-500/70 dark:from-zinc-800 dark:to-slate-900 dark:ring-amber-400/70">
@@ -48,7 +49,13 @@ export function ActorCard({ actor }: { actor: ActorCardData }) {
 
         <div className="min-w-0">
           <h3 className="truncate text-lg font-bold text-zinc-900 dark:text-white">
-            {actor.name}
+            {/* stretched link: คลิกตรงไหนของการ์ดก็ไปหน้ารายละเอียด */}
+            <Link
+              href={`/actors/${actor.id}`}
+              className="after:absolute after:inset-0 focus:outline-none"
+            >
+              {actor.name}
+            </Link>
           </h3>
           <p className="mt-0.5 flex items-center gap-1.5 text-sm text-zinc-600 dark:text-zinc-400">
             <Globe2 className="h-3.5 w-3.5 shrink-0" aria-hidden />

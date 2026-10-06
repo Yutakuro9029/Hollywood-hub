@@ -19,9 +19,6 @@ function formatGross(mil: { toString(): string }): string {
   return n >= 1000 ? `$${(n / 1000).toFixed(2)}B` : `$${Math.round(n)}M`;
 }
 
-const searchHref = (path: "/actors" | "/movies", q: string) =>
-  `${path}?q=${encodeURIComponent(q)}`;
-
 /** รูปดารา: ตัวอักษรย่อวางใต้รูป ถ้ารูปโหลดไม่ได้ (alt ว่าง) จะเห็นตัวอักษรย่อแทน */
 function Avatar({ name, url, className = "" }: { name: string; url: string | null; className?: string }) {
   return (
@@ -191,7 +188,7 @@ export default async function HomePage() {
               {/* ตั๋วหนัง: หนังที่ทำรายได้สูงสุดในระบบ */}
               {lead && (
                 <Link
-                  href={searchHref("/movies", lead.title)}
+                  href={`/movies/${lead.id}`}
                   className="group mx-auto block w-full max-w-sm -rotate-2 transition-transform duration-500 hover:rotate-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 motion-reduce:transition-none motion-reduce:hover:-rotate-2 lg:ml-auto lg:mr-0"
                 >
                   <div className="relative flex overflow-hidden rounded-xl bg-amber-50 text-slate-900 shadow-2xl shadow-black/60">
@@ -370,7 +367,7 @@ export default async function HomePage() {
                   )}
 
                   <Link
-                    href={searchHref("/actors", topActor.name)}
+                    href={`/actors/${topActor.id}`}
                     className="mt-6 inline-flex w-fit items-center rounded-lg bg-amber-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 motion-reduce:transition-none"
                   >
                     ดูข้อมูลของ {topActor.name}
@@ -384,7 +381,7 @@ export default async function HomePage() {
                   {otherActors.map((actor, i) => (
                     <li key={actor.id} className="flex-1">
                       <Link
-                        href={searchHref("/actors", actor.name)}
+                        href={`/actors/${actor.id}`}
                         className="group flex h-full items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-4 transition-colors hover:border-amber-400/70 hover:bg-amber-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 motion-reduce:transition-none dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-800/70"
                       >
                         <span aria-hidden className="w-5 text-center font-display text-xl font-bold text-zinc-400 dark:text-zinc-500">
@@ -437,7 +434,7 @@ export default async function HomePage() {
               {blockbusters.map((movie, i) => (
                 <li key={movie.id} className="w-40 shrink-0 snap-start sm:w-48 lg:w-52">
                   <Link
-                    href={searchHref("/movies", movie.title)}
+                    href={`/movies/${movie.id}`}
                     className="group block rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
                   >
                     <div className="relative">
