@@ -1,15 +1,10 @@
 import Link from "next/link";
-import { Clapperboard, LayoutDashboard, LogIn, LogOut, User } from "lucide-react";
+import { Clapperboard, LayoutDashboard, LogIn, LogOut } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { logout } from "@/app/actions/auth";
 import { ThemeToggle } from "@/components/theme-toggle";
-
-const NAV_LINKS = [
-  { href: "/", label: "หน้าแรก" },
-  { href: "/actors", label: "รายชื่อดารา" },
-  { href: "/movies", label: "ภาพยนตร์เด่น" },
-] as const;
+import NavLinks from "@/components/nav-links";
 
 /** อ่าน session แล้วตรวจซ้ำกับฐานข้อมูล (กรณี user ถูกลบ/เปลี่ยนสิทธิ์หลังออก cookie) */
 async function getCurrentUser() {
@@ -21,51 +16,53 @@ async function getCurrentUser() {
   });
 }
 
-const outlineBtn =
-  "inline-flex items-center gap-2 rounded-lg border border-amber-500/70 px-3 py-2 text-sm font-medium text-amber-700 transition hover:bg-amber-400 hover:text-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 dark:border-amber-400/60 dark:text-amber-300 sm:px-4";
+const focusRing =
+  "focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:focus-visible:ring-offset-slate-950";
 
 export default async function Navbar() {
   const user = await getCurrentUser();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-zinc-200 bg-zinc-50/85 backdrop-blur dark:border-zinc-800/80 dark:bg-slate-950/85">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3 sm:px-6 lg:px-8">
-        <Link
-          href="/"
-          className="flex items-center gap-2 font-semibold text-amber-600 dark:text-amber-400"
-        >
-          <Clapperboard className="h-6 w-6" aria-hidden />
-          <span className="text-base sm:text-lg">Hollywood Hub</span>
+    <header className="sticky top-0 z-40 border-b border-zinc-200/80 bg-zinc-50/80 backdrop-blur-md dark:border-zinc-800/80 dark:bg-slate-950/80">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-1 px-4 py-3 sm:px-6 lg:px-8">
+        {/* โลโก้ */}
+        <Link href="/" className={`group flex items-center gap-2.5 rounded-lg ${focusRing}`}>
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-400 text-slate-950 shadow-sm shadow-amber-500/30 transition-transform duration-300 group-hover:-rotate-6 motion-reduce:transition-none">
+            <Clapperboard className="h-5 w-5" aria-hidden />
+          </span>
+          <span className="font-display text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+            Hollywood Hub
+          </span>
         </Link>
 
-        {/* มือถือ: ลงมาอยู่แถวที่ 2 เต็มความกว้าง / จอ md ขึ้นไป: อยู่กลางแถวเดียวกับโลโก้ */}
+        {/* เมนูหลัก: มือถืออยู่แถวที่ 2 เต็มความกว้าง / จอ md ขึ้นไปอยู่กลางแถวเดียวกับโลโก้ */}
         <nav
           aria-label="เมนูหลัก"
-          className="order-last flex w-full items-center gap-1 overflow-x-auto md:order-none md:w-auto"
+          className="order-last -mx-3 flex w-full items-center gap-1 overflow-x-auto pb-1 md:order-none md:mx-0 md:w-auto md:pb-0"
         >
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-200/70 hover:text-amber-700 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-amber-300"
-            >
-              {link.label}
-            </Link>
-          ))}
+          <NavLinks />
         </nav>
 
+        {/* ฝั่งขวา: สลับธีม + สถานะผู้ใช้ */}
         <div className="flex items-center gap-2 sm:gap-3">
           <ThemeToggle />
 
           {!user && (
-            <Link href="/login" className={outlineBtn}>
+            <Link
+              href="/login"
+              className={`inline-flex items-center gap-2 rounded-lg border border-amber-500/70 px-3.5 py-2 text-sm font-semibold text-amber-700 transition-colors hover:bg-amber-400 hover:text-slate-950 motion-reduce:transition-none dark:border-amber-400/60 dark:text-amber-300 dark:hover:text-slate-950 ${focusRing}`}
+            >
               <LogIn className="h-4 w-4" aria-hidden />
               เข้าสู่ระบบ
             </Link>
           )}
 
           {user?.role === "ADMIN" && (
-            <Link href="/admin" className={outlineBtn} aria-label="แดชบอร์ดหลังบ้าน">
+            <Link
+              href="/admin"
+              aria-label="แดชบอร์ดหลังบ้าน"
+              className={`inline-flex items-center gap-2 rounded-lg bg-amber-400 px-3.5 py-2 text-sm font-semibold text-slate-950 shadow-sm shadow-amber-500/20 transition-colors hover:bg-amber-300 motion-reduce:transition-none ${focusRing}`}
+            >
               <LayoutDashboard className="h-4 w-4" aria-hidden />
               <span className="hidden sm:inline">แดชบอร์ดหลังบ้าน</span>
               <span className="sm:hidden">แอดมิน</span>
@@ -73,8 +70,13 @@ export default async function Navbar() {
           )}
 
           {user?.role === "USER" && (
-            <span className="inline-flex max-w-32 items-center gap-1.5 text-sm text-zinc-700 dark:text-zinc-300 sm:max-w-48">
-              <User className="h-4 w-4 shrink-0" aria-hidden />
+            <span className="inline-flex max-w-40 items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+              <span
+                aria-hidden
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-400/20 text-sm font-bold text-amber-700 ring-1 ring-amber-500/40 dark:text-amber-300"
+              >
+                {user.username.charAt(0).toUpperCase()}
+              </span>
               <span className="hidden truncate sm:inline">{user.username}</span>
             </span>
           )}
@@ -84,7 +86,7 @@ export default async function Navbar() {
               <button
                 type="submit"
                 aria-label="ออกจากระบบ"
-                className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-600 transition hover:bg-red-500/10 hover:text-red-500 dark:text-zinc-400 dark:hover:text-red-400"
+                className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-600 transition-colors hover:bg-red-500/10 hover:text-red-600 motion-reduce:transition-none dark:text-zinc-400 dark:hover:text-red-400 ${focusRing}`}
               >
                 <LogOut className="h-4 w-4" aria-hidden />
                 <span className="hidden sm:inline">ออกจากระบบ</span>

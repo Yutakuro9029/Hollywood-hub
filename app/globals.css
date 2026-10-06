@@ -2,9 +2,16 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* ฟอนต์: body = Prompt, หัวข้อ = Playfair Display + Noto Serif Thai (ใช้ผ่านคลาส font-display) */
+@theme inline {
+  --font-sans: var(--font-sans-th), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-playfair), var(--font-serif-th), Georgia, serif;
+}
+
 /* Custom scrollbar สไตล์ Cinema */
 ::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
@@ -12,4 +19,65 @@
 ::-webkit-scrollbar-thumb {
   background: #3f3f46;
   border-radius: 4px;
+}
+
+/* ───────── ป้ายไฟโรงหนัง (Marquee bulbs) ─────────
+   แต่ละแถบมีหลอดไฟ 2 ชุดสลับกันสว่าง (::before / ::after) ให้ดูเหมือนไฟวิ่ง
+   ใช้กับ <div class="bulb-strip bulb-h"> (แนวนอน) และ <div class="bulb-strip bulb-v"> (แนวตั้ง) */
+.bulb-strip {
+  position: absolute;
+  pointer-events: none;
+  --bulb-core: #fde68a;
+  --bulb-glow: rgba(251, 191, 36, 0.4);
+}
+.bulb-strip::before,
+.bulb-strip::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-repeat: repeat;
+}
+.bulb-h::before,
+.bulb-h::after {
+  background-size: 44px 22px;
+}
+.bulb-v::before,
+.bulb-v::after {
+  background-size: 22px 44px;
+}
+.bulb-h::before {
+  background-image: radial-gradient(circle at 11px 11px, var(--bulb-core) 0 3px, var(--bulb-glow) 3px 7px, transparent 8px);
+}
+.bulb-h::after {
+  background-image: radial-gradient(circle at 33px 11px, var(--bulb-core) 0 3px, var(--bulb-glow) 3px 7px, transparent 8px);
+}
+.bulb-v::before {
+  background-image: radial-gradient(circle at 11px 11px, var(--bulb-core) 0 3px, var(--bulb-glow) 3px 7px, transparent 8px);
+}
+.bulb-v::after {
+  background-image: radial-gradient(circle at 11px 33px, var(--bulb-core) 0 3px, var(--bulb-glow) 3px 7px, transparent 8px);
+}
+.bulb-strip::before {
+  animation: bulb-a 1.8s steps(1) infinite;
+}
+.bulb-strip::after {
+  animation: bulb-b 1.8s steps(1) infinite;
+}
+
+@keyframes bulb-a {
+  0%, 49.99% { opacity: 1; }
+  50%, 100% { opacity: 0.25; }
+}
+@keyframes bulb-b {
+  0%, 49.99% { opacity: 0.25; }
+  50%, 100% { opacity: 1; }
+}
+
+/* ผู้ใช้ที่ปิดแอนิเมชันในระบบ: ให้หลอดไฟสว่างนิ่ง */
+@media (prefers-reduced-motion: reduce) {
+  .bulb-strip::before,
+  .bulb-strip::after {
+    animation: none;
+    opacity: 0.9;
+  }
 }
