@@ -15,6 +15,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { calcAge, formatNumber, formatRating, getInitials } from "@/lib/format";
 import Navbar from "@/components/navbar";
+import FavoriteButton from "@/components/favorite-button";
 
 /* ───────────────────────── Types & data ───────────────────────── */
 
@@ -149,7 +150,7 @@ function Stat({
 function MovieCard({ movie }: { movie: Movie }) {
   const box = Number(movie.box_office_mil);
   return (
-    <li>
+    <li className="relative">
       <Link href={`/movies/${movie.id}`} className={`group block rounded-lg ${focusRing}`}>
         <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-zinc-200 ring-1 ring-zinc-900/10 dark:bg-slate-900 dark:ring-white/10">
           <Poster
@@ -157,7 +158,7 @@ function MovieCard({ movie }: { movie: Movie }) {
             title={movie.title}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:transition-none"
           />
-          <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-md bg-slate-950/85 px-2 py-1 text-xs font-semibold text-amber-300 backdrop-blur-sm">
+          <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-md bg-slate-950/85 px-2 py-1 text-xs font-semibold text-amber-300 backdrop-blur-sm">
             <Star className="h-3 w-3 fill-current" aria-hidden />
             {formatRating(movie.rating)}
           </span>
@@ -176,6 +177,19 @@ function MovieCard({ movie }: { movie: Movie }) {
           {boxOfficeM(box)}
         </p>
       </Link>
+
+      {/* sibling ของ <Link> (ห้ามซ้อน button ใน a) ทับมุมขวาบนของโปสเตอร์ */}
+      <FavoriteButton
+        kind="movie"
+        variant="overlay"
+        item={{
+          id: movie.id,
+          title: movie.title,
+          poster_url: movie.poster_url,
+          rating: movie.rating === null ? null : Number(movie.rating),
+          year: movie.release_year,
+        }}
+      />
     </li>
   );
 }
@@ -291,6 +305,19 @@ export default async function ActorPage({ params, searchParams }: Props) {
                     {formatNumber(actor.awards_count)} รางวัล
                   </li>
                 </ul>
+
+                <div className="mt-6">
+                  <FavoriteButton
+                    kind="actor"
+                    variant="pill"
+                    item={{
+                      id: actor.id,
+                      name: actor.name,
+                      avatar_url: actor.avatar_url,
+                      nationality: actor.nationality,
+                    }}
+                  />
+                </div>
 
                 {actor.bio ? (
                   <p className="mt-6 max-w-prose whitespace-pre-line text-base leading-8 text-zinc-700 dark:text-zinc-300">

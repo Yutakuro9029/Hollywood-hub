@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Film, Star } from "lucide-react";
 import { formatRating } from "@/lib/format";
+import FavoriteButton from "@/components/favorite-button";
 
 export type MovieCardData = {
   id: number;
@@ -40,13 +41,27 @@ export function MovieCard({
           />
         )}
         <span
-          className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-md bg-slate-950/80 px-2 py-1 text-xs font-semibold text-amber-300 backdrop-blur"
+          className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-md bg-slate-950/80 px-2 py-1 text-xs font-semibold text-amber-300 backdrop-blur"
           title="คะแนนจาก 10"
         >
           <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" aria-hidden />
           {formatRating(movie.rating)}
         </span>
       </div>
+
+      {/* วางเป็นลูกตรงของ article (ไม่ใช่ในกรอบโปสเตอร์ที่ถูก translate ตอน hover)
+          และใช้ z-10 เพื่อให้อยู่เหนือ stretched link ของการ์ด */}
+      <FavoriteButton
+        kind="movie"
+        variant="overlay"
+        item={{
+          id: movie.id,
+          title: movie.title,
+          poster_url: movie.poster_url,
+          rating: movie.rating === null ? null : Number(movie.rating.toString()),
+          year: movie.release_year,
+        }}
+      />
 
       <div className="mt-3 space-y-0.5">
         <h3 className="line-clamp-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">

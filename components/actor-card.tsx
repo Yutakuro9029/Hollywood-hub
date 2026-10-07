@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Award, Film, Globe2, Star } from "lucide-react";
 import { calcAge, formatRating, getInitials } from "@/lib/format";
+import FavoriteButton from "@/components/favorite-button";
 
 export type ActorCardData = {
   id: number;
@@ -48,15 +49,29 @@ export function ActorCard({ actor }: { actor: ActorCardData }) {
         </div>
 
         <div className="min-w-0">
-          <h3 className="truncate text-lg font-bold text-zinc-900 dark:text-white">
-            {/* stretched link: คลิกตรงไหนของการ์ดก็ไปหน้ารายละเอียด */}
-            <Link
-              href={`/actors/${actor.id}`}
-              className="after:absolute after:inset-0 focus:outline-none"
-            >
-              {actor.name}
-            </Link>
-          </h3>
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="min-w-0 truncate text-lg font-bold text-zinc-900 dark:text-white">
+              {/* stretched link: คลิกตรงไหนของการ์ดก็ไปหน้ารายละเอียด */}
+              <Link
+                href={`/actors/${actor.id}`}
+                className="after:absolute after:inset-0 focus:outline-none"
+              >
+                {actor.name}
+              </Link>
+            </h3>
+            {/* relative z-10: ให้อยู่เหนือ stretched link จึงกดได้โดยไม่พาไปหน้ารายละเอียด */}
+            <FavoriteButton
+              kind="actor"
+              variant="icon"
+              className="relative z-10 -mt-1"
+              item={{
+                id: actor.id,
+                name: actor.name,
+                avatar_url: actor.avatar_url,
+                nationality: actor.nationality,
+              }}
+            />
+          </div>
           <p className="mt-0.5 flex items-center gap-1.5 text-sm text-zinc-600 dark:text-zinc-400">
             <Globe2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
             <span className="truncate">

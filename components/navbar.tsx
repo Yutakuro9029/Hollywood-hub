@@ -5,6 +5,7 @@ import { getSession } from "@/lib/session";
 import { logout } from "@/app/actions/auth";
 import { ThemeToggle } from "@/components/theme-toggle";
 import NavLinks from "@/components/nav-links";
+import WatchlistLink from "@/components/watchlist-link";
 
 /** อ่าน session แล้วตรวจซ้ำกับฐานข้อมูล (กรณี user ถูกลบ/เปลี่ยนสิทธิ์หลังออก cookie) */
 async function getCurrentUser() {
@@ -26,7 +27,10 @@ export default async function Navbar() {
     <header className="sticky top-0 z-40 border-b border-zinc-200/80 bg-zinc-50/80 backdrop-blur-md dark:border-zinc-800/80 dark:bg-slate-950/80">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-1 px-4 py-3 sm:px-6 lg:px-8">
         {/* โลโก้ */}
-        <Link href="/" className={`group flex items-center gap-2.5 rounded-lg ${focusRing}`}>
+        <Link
+          href="/"
+          className={`group flex items-center gap-2.5 rounded-lg ${focusRing}`}
+        >
           <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-400 text-slate-950 shadow-sm shadow-amber-500/30 transition-transform duration-300 group-hover:-rotate-6 motion-reduce:transition-none">
             <Clapperboard className="h-5 w-5" aria-hidden />
           </span>
@@ -45,6 +49,7 @@ export default async function Navbar() {
 
         {/* ฝั่งขวา: สลับธีม + สถานะผู้ใช้ */}
         <div className="flex items-center gap-2 sm:gap-3">
+          <WatchlistLink />
           <ThemeToggle />
 
           {!user && (

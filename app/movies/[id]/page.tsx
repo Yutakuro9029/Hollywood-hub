@@ -15,6 +15,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { formatNumber, formatRating, getInitials } from "@/lib/format";
 import Navbar from "@/components/navbar";
+import FavoriteButton from "@/components/favorite-button";
 
 /* ───────────────────────── Types & data ───────────────────────── */
 
@@ -215,6 +216,20 @@ export default async function MoviePage({ params }: Props) {
                   </ul>
                 )}
 
+                <div className="mt-6">
+                  <FavoriteButton
+                    kind="movie"
+                    variant="pill"
+                    item={{
+                      id: movie.id,
+                      title: movie.title,
+                      poster_url: movie.poster_url,
+                      rating,
+                      year: movie.release_year,
+                    }}
+                  />
+                </div>
+
                 {/* Rating + Box Office */}
                 <div className="mt-8 grid max-w-xl grid-cols-1 gap-px overflow-hidden rounded-xl border border-zinc-200 bg-zinc-200 sm:grid-cols-2 dark:border-zinc-800 dark:bg-zinc-800">
                   <div className="bg-white p-5 dark:bg-slate-900">
@@ -294,13 +309,26 @@ export default async function MoviePage({ params }: Props) {
                       </p>
                     </div>
 
-                    <Link
-                      href={`/actors/${actor.id}`}
-                      className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-amber-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-amber-300 ${focusRing}`}
-                    >
-                      ดูประวัติดารา
-                      <ArrowRight className="h-4 w-4" aria-hidden />
-                    </Link>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <FavoriteButton
+                        kind="actor"
+                        variant="icon"
+                        className="h-10 w-10"
+                        item={{
+                          id: actor.id,
+                          name: actor.name,
+                          avatar_url: actor.avatar_url,
+                          nationality: actor.nationality,
+                        }}
+                      />
+                      <Link
+                        href={`/actors/${actor.id}`}
+                        className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-amber-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-amber-300 ${focusRing}`}
+                      >
+                        ดูประวัติดารา
+                        <ArrowRight className="h-4 w-4" aria-hidden />
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -333,7 +361,7 @@ export default async function MoviePage({ params }: Props) {
 
               <ul className="mt-8 grid grid-cols-2 gap-x-5 gap-y-9 sm:grid-cols-3 lg:grid-cols-4">
                 {otherMovies.map((m) => (
-                  <li key={m.id}>
+                  <li key={m.id} className="relative">
                     <Link href={`/movies/${m.id}`} className={`group block rounded-lg ${focusRing}`}>
                       <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-zinc-200 ring-1 ring-zinc-900/10 dark:bg-slate-900 dark:ring-white/10">
                         {m.poster_url ? (
@@ -347,7 +375,7 @@ export default async function MoviePage({ params }: Props) {
                         ) : (
                           <PosterFallback title={m.title} />
                         )}
-                        <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-md bg-slate-950/85 px-2 py-1 text-xs font-semibold text-amber-300 backdrop-blur-sm">
+                        <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-md bg-slate-950/85 px-2 py-1 text-xs font-semibold text-amber-300 backdrop-blur-sm">
                           <Star className="h-3 w-3 fill-current" aria-hidden />
                           {formatRating(m.rating)}
                         </span>
@@ -359,6 +387,19 @@ export default async function MoviePage({ params }: Props) {
                         {m.release_year ?? "ไม่ระบุปีที่ฉาย"}
                       </p>
                     </Link>
+
+                    {/* sibling ของ <Link> (ห้ามซ้อน button ใน a) ทับมุมขวาบนของโปสเตอร์ */}
+                    <FavoriteButton
+                      kind="movie"
+                      variant="overlay"
+                      item={{
+                        id: m.id,
+                        title: m.title,
+                        poster_url: m.poster_url,
+                        rating: m.rating === null ? null : Number(m.rating),
+                        year: m.release_year,
+                      }}
+                    />
                   </li>
                 ))}
               </ul>
