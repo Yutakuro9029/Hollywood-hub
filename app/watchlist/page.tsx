@@ -10,7 +10,8 @@ import {
   type FavoriteMovie,
 } from "@/lib/use-favorites";
 import { formatRating, getInitials } from "@/lib/format";
-import { Skeleton, SkeletonRegion } from "@/components/ui/skeleton";
+import { tmdbImage } from "@/lib/tmdb-image";
+import { useI18n } from "@/lib/i18n/client";
 
 type TabKey = "movies" | "actors";
 
@@ -35,6 +36,7 @@ function MovieCard({
   movie: FavoriteMovie;
   onRemove: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <li className="group relative">
       <Link
@@ -45,7 +47,7 @@ function MovieCard({
           {movie.poster_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={movie.poster_url}
+              src={tmdbImage(movie.poster_url, "w342") ?? undefined}
               alt=""
               loading="lazy"
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:transition-none"
@@ -75,8 +77,8 @@ function MovieCard({
         type="button"
         onClick={onRemove}
         className={removeBtnCls}
-        aria-label={`นำ ${movie.title} ออกจากรายการโปรด`}
-        title="นำออก"
+        aria-label={t.watchlist.remove(movie.title)}
+        title={t.watchlist.removeShort}
       >
         <X className="h-4 w-4" aria-hidden />
       </button>
@@ -91,6 +93,7 @@ function ActorCard({
   actor: FavoriteActor;
   onRemove: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <li className="group relative">
       <Link
@@ -101,7 +104,7 @@ function ActorCard({
           {actor.avatar_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={actor.avatar_url}
+              src={tmdbImage(actor.avatar_url, "w342") ?? undefined}
               alt=""
               loading="lazy"
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:transition-none"
@@ -125,8 +128,8 @@ function ActorCard({
         type="button"
         onClick={onRemove}
         className={removeBtnCls}
-        aria-label={`นำ ${actor.name} ออกจากรายการโปรด`}
-        title="นำออก"
+        aria-label={t.watchlist.remove(actor.name)}
+        title={t.watchlist.removeShort}
       >
         <X className="h-4 w-4" aria-hidden />
       </button>
@@ -183,18 +186,14 @@ function EmptyState({
   );
 }
 
-const BookmarkHint = (
-  <Bookmark
-    className="mx-0.5 inline h-3.5 w-3.5 -translate-y-px text-amber-600 dark:text-amber-300"
-    aria-label="บุ๊กมาร์ก"
-  />
-);
+function BookmarkHint({ label }: { label: string }) {
+  return <Bookmark className="mx-1 inline h-3.5 w-3.5 -translate-y-px text-amber-600 dark:text-amber-300" aria-label={label} />;
+}
 
 /* ───────────────────────── Page ───────────────────────── */
 
 export default function WatchlistPage() {
   const {
-    mounted,
     favoriteMovies,
     favoriteActors,
     totalCount,
@@ -204,6 +203,7 @@ export default function WatchlistPage() {
     removeActor,
     clearAll,
   } = useFavorites();
+  const { t } = useI18n();
 
   const [tab, setTab] = useState<TabKey>("movies");
   const [undo, setUndo] = useState<Undo | null>(null);
@@ -284,13 +284,13 @@ export default function WatchlistPage() {
   }[] = [
     {
       key: "movies",
-      label: "ภาพยนตร์ที่บันทึกไว้",
+      label: t.watchlist.tabMovies,
       icon: Film,
       count: favoriteMovies.length,
     },
     {
       key: "actors",
-      label: "ดาราคนโปรด",
+      label: t.watchlist.tabActors,
       icon: UserRound,
       count: favoriteActors.length,
     },
@@ -312,15 +312,14 @@ export default function WatchlistPage() {
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl dark:text-zinc-50">
-            รายการโปรดของฉัน
+            {t.watchlist.title}
           </h1>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-            เก็บเรื่องที่อยากดูและดาราที่ติดตามไว้ในที่เดียว
-            รายการนี้บันทึกไว้ในเบราว์เซอร์เครื่องนี้เท่านั้น
+            {t.watchlist.intro1} {t.watchlist.intro2}
           </p>
         </div>
 
-        {mounted && totalCount > 0 && (
+        {totalCount > 0 && (
           <button
             type="button"
             onClick={handleClearAll}
@@ -330,9 +329,7 @@ export default function WatchlistPage() {
                 : "border-zinc-300 text-zinc-600 hover:border-red-400 hover:text-red-600 dark:border-zinc-700 dark:text-zinc-400 dark:hover:text-red-400"
             }`}
           >
-            {confirmClear
-              ? "กดอีกครั้งเพื่อล้างทั้งหมด"
-              : "ล้างรายการโปรดทั้งหมด"}
+            {confirmClear ? t.watchlist.clearConfirm : t.watchlist.clear}
           </button>
         )}
       </header>
@@ -340,7 +337,7 @@ export default function WatchlistPage() {
       {/* Tabs */}
       <div
         role="tablist"
-        aria-label="ประเภทรายการโปรด"
+        aria-label={t.watchlist.tabsLabel}
         onKeyDown={handleTabKeyDown}
         className="mt-8 flex gap-1 border-b border-zinc-200 dark:border-zinc-800"
       >
@@ -367,17 +364,15 @@ export default function WatchlistPage() {
             >
               <Icon className="h-4 w-4" aria-hidden />
               {label}
-              {mounted && (
-                <span
-                  className={`min-w-5 rounded-full px-1.5 py-0.5 text-center text-xs font-semibold ${
-                    selected
-                      ? "bg-amber-400 text-slate-950"
-                      : "bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-                  }`}
-                >
-                  {count}
-                </span>
-              )}
+              <span
+                className={`min-w-5 rounded-full px-1.5 py-0.5 text-center text-xs font-semibold ${
+                  selected
+                    ? "bg-amber-400 text-slate-950"
+                    : "bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                }`}
+              >
+                {count}
+              </span>
             </button>
           );
         })}
@@ -390,35 +385,20 @@ export default function WatchlistPage() {
         aria-labelledby={`watchlist-tab-${tab}`}
         className="mt-8"
       >
-        {!mounted ? (
-          <SkeletonRegion className={gridCls}>
-            {Array.from({ length: 5 }, (_, i) => (
-              <div key={i} className="space-y-3">
-                <Skeleton
-                  className={
-                    tab === "movies"
-                      ? "aspect-[2/3] rounded-xl"
-                      : "aspect-[4/5] rounded-xl"
-                  }
-                />
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-3 w-1/3" />
-              </div>
-            ))}
-          </SkeletonRegion>
-        ) : tab === "movies" ? (
+        {tab === "movies" ? (
           favoriteMovies.length === 0 ? (
             <EmptyState
               icon={Film}
-              title="ยังไม่มีภาพยนตร์ที่บันทึกไว้"
+              title={t.watchlist.emptyMovies}
               hint={
                 <>
-                  กดไอคอน{BookmarkHint}บนโปสเตอร์
-                  เพื่อเก็บเรื่องที่อยากดูไว้ที่นี่
+                  {t.watchlist.tapIcon}
+                  <BookmarkHint label={t.watchlist.bookmark} />
+                  {t.watchlist.emptyMoviesHint}
                 </>
               }
-              href="/movies"
-              cta="สำรวจภาพยนตร์เด่น"
+              href="/movies?sort=new"
+              cta={t.watchlist.emptyMoviesCta}
             />
           ) : (
             <ul role="list" className={gridCls}>
@@ -434,15 +414,16 @@ export default function WatchlistPage() {
         ) : favoriteActors.length === 0 ? (
           <EmptyState
             icon={UserRound}
-            title="ยังไม่มีดาราคนโปรด"
+            title={t.watchlist.emptyActors}
             hint={
               <>
-                กดไอคอน{BookmarkHint}ข้างชื่อดารา
-                เพื่อติดตามคนที่คุณชอบไว้ที่นี่
+                {t.watchlist.tapIcon}
+                <BookmarkHint label={t.watchlist.bookmark} />
+                {t.watchlist.emptyActorsHint}
               </>
             }
             href="/actors"
-            cta="ดูรายชื่อดารา"
+            cta={t.watchlist.emptyActorsCta}
           />
         ) : (
           <ul role="list" className={gridCls}>
@@ -464,14 +445,14 @@ export default function WatchlistPage() {
           aria-live="polite"
           className="fixed inset-x-4 bottom-4 z-50 mx-auto flex max-w-md items-center justify-between gap-4 rounded-xl border border-zinc-700 bg-slate-900 px-4 py-3 text-sm text-zinc-100 shadow-xl shadow-black/30"
         >
-          <span className="min-w-0 truncate">นำ {undoName} ออกแล้ว</span>
+          <span className="min-w-0 truncate">{t.watchlist.removed(undoName)}</span>
           <button
             type="button"
             onClick={handleUndo}
             className={`inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1 font-semibold text-amber-300 transition-colors hover:bg-amber-400/10 motion-reduce:transition-none ${focusRing}`}
           >
             <Undo2 className="h-4 w-4" aria-hidden />
-            เลิกทำ
+            {t.watchlist.undo}
           </button>
         </div>
       )}

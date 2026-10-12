@@ -1,42 +1,43 @@
-import Link from "next/link";
 import { DollarSign, Medal, Star, Trophy, Users } from "lucide-react";
 import { requireAdmin } from "@/lib/dal";
-import { getRankingsData } from "@/lib/dashboard-data";
-import { fmtMoney, fmtNumber, nowTh } from "@/lib/dashboard-format";
+import { getRankingsData, leadName } from "@/lib/dashboard-data";
+import { fmtMoney, fmtNumber } from "@/lib/dashboard-format";
+import { getI18n } from "@/lib/i18n/server";
 import { PageHeader, Panel, RankBadge, Thumb, rowCls, thCls } from "@/components/admin/dashboard-ui";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminRankingsPage() {
   await requireAdmin();
-  const d = await getRankingsData();
+  const [d, { t }] = await Promise.all([getRankingsData(), getI18n()]);
+  const r = t.admin.rk;
   const maxBox = d.perActor[0]?.box || 1;
 
   return (
     <div className="space-y-8">
       <PageHeader
-        title="อันดับ & ผลงาน"
-        description="จัดอันดับภาพยนตร์และดาราในระบบ พร้อมตารางสรุปผลงานของดาราแต่ละคน"
-        updatedAt={nowTh()}
+        title={t.admin.rankings}
+        description={r.description}
+        updatedAt={t.date.dateTime(new Date())}
       />
 
       <div className="grid gap-6 2xl:grid-cols-2">
         {/* Top 5 Box Office */}
-        <Panel title="Top 5 ภาพยนตร์ทำเงินสูงสุด" icon={DollarSign} tone="text-emerald-500"
-          href="/admin/movies" hrefLabel="จัดการภาพยนตร์" flush>
+        <Panel title={r.topBox} icon={DollarSign}
+          href="/admin/movies" hrefLabel={t.admin.manageMovies} flush>
           {d.topMovies.length === 0 ? (
-            <p className="p-5 text-sm text-zinc-500">ยังไม่มีข้อมูลภาพยนตร์</p>
+            <p className="p-5 text-sm text-zinc-500">{r.noMovies}</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[640px] text-left text-sm">
                 <thead className="text-xs uppercase text-zinc-500 dark:text-zinc-400">
                   <tr>
                     <th className="px-5 py-3 font-medium">#</th>
-                    <th className={thCls}>ภาพยนตร์</th>
-                    <th className={thCls}>ดารา</th>
-                    <th className={thCls}>ปี</th>
+                    <th className={thCls}>{r.colMovie}</th>
+                    <th className={thCls}>{r.colActor}</th>
+                    <th className={thCls}>{r.colYear}</th>
                     <th className={`${thCls} text-right`}>Box Office</th>
-                    <th className="px-5 py-3 text-right font-medium">เรตติ้ง</th>
+                    <th className="px-5 py-3 text-right font-medium">{r.colRating}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
@@ -49,7 +50,7 @@ export default async function AdminRankingsPage() {
                           <span className="font-medium">{m.title}</span>
                         </div>
                       </td>
-                      <td className="px-2 py-3 text-zinc-600 dark:text-zinc-300">{m.actors.name}</td>
+                      <td className="px-2 py-3 text-zinc-600 dark:text-zinc-300">{leadName(m)}</td>
                       <td className="px-2 py-3 text-zinc-600 dark:text-zinc-300">{m.release_year ?? "-"}</td>
                       <td className="px-2 py-3 text-right font-semibold text-emerald-500">
                         ${fmtNumber(Number(m.box_office_mil), 1)}M
@@ -69,20 +70,20 @@ export default async function AdminRankingsPage() {
         </Panel>
 
         {/* Top 5 Awarded */}
-        <Panel title="Top 5 ดาราที่ได้รับรางวัลสูงสุด" icon={Trophy} tone="text-amber-400"
-          href="/admin/actors" hrefLabel="จัดการดารา" flush>
+        <Panel title={r.topAwards} icon={Trophy}
+          href="/admin/actors" hrefLabel={t.admin.manageActors} flush>
           {d.topActors.length === 0 ? (
-            <p className="p-5 text-sm text-zinc-500">ยังไม่มีข้อมูลดารา</p>
+            <p className="p-5 text-sm text-zinc-500">{r.noActors}</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[560px] text-left text-sm">
                 <thead className="text-xs uppercase text-zinc-500 dark:text-zinc-400">
                   <tr>
                     <th className="px-5 py-3 font-medium">#</th>
-                    <th className={thCls}>ดารา</th>
-                    <th className={thCls}>สัญชาติ</th>
-                    <th className={`${thCls} text-right`}>รางวัล</th>
-                    <th className="px-5 py-3 text-right font-medium">หนังในระบบ</th>
+                    <th className={thCls}>{r.colActor}</th>
+                    <th className={thCls}>{r.colNationality}</th>
+                    <th className={`${thCls} text-right`}>{r.colAwards}</th>
+                    <th className="px-5 py-3 text-right font-medium">{r.colMoviesInSystem}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
@@ -96,8 +97,8 @@ export default async function AdminRankingsPage() {
                         </div>
                       </td>
                       <td className="px-2 py-3 text-zinc-600 dark:text-zinc-300">{a.nationality ?? "-"}</td>
-                      <td className="px-2 py-3 text-right font-semibold text-amber-500">{fmtNumber(a.awards_count)}</td>
-                      <td className="px-5 py-3 text-right">{fmtNumber(a._count.movies)} เรื่อง</td>
+                      <td className="px-2 py-3 text-right font-semibold text-amber-500">{a.awards_count === null ? "-" : fmtNumber(a.awards_count)}</td>
+                      <td className="px-5 py-3 text-right">{t.common.films(a._count.credits)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -108,15 +109,15 @@ export default async function AdminRankingsPage() {
       </div>
 
       {/* Top rated — โปสเตอร์ */}
-      <Panel title="Top 5 ภาพยนตร์เรตติ้งสูงสุด" subtitle="เรียงตามคะแนน (เสมอกันดูที่ Box Office)" icon={Medal} tone="text-rose-500">
+      <Panel title={r.topRated} subtitle={r.topRatedHint} icon={Medal}>
         {d.topRated.length === 0 ? (
-          <p className="text-sm text-zinc-500">ยังไม่มีภาพยนตร์ที่มีคะแนนเรตติ้ง</p>
+          <p className="text-sm text-zinc-500">{r.noRated}</p>
         ) : (
           <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
             {d.topRated.map((m, i) => (
               <li key={m.id} className="group">
                 <div className="relative aspect-[2/3] overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100 shadow-sm transition group-hover:-translate-y-1 group-hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-800">
-                  <Thumb src={m.poster_url} alt={m.title} className="h-full w-full transition duration-300 group-hover:scale-105" />
+                  <Thumb src={m.poster_url} alt={m.title} size="w185" className="h-full w-full transition duration-300 group-hover:scale-105" />
                   <div className="absolute left-2 top-2"><RankBadge rank={i + 1} /></div>
                   <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/70 px-2 py-0.5 text-xs font-semibold text-amber-300 backdrop-blur">
                     <Star size={12} className="fill-amber-300" /> {Number(m.rating).toFixed(1)}
@@ -124,7 +125,7 @@ export default async function AdminRankingsPage() {
                 </div>
                 <p className="mt-2 truncate text-sm font-medium">{m.title}</p>
                 <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
-                  {m.actors.name} · {m.release_year ?? "-"}
+                  {leadName(m)} · {m.release_year ?? "-"}
                 </p>
               </li>
             ))}
@@ -133,21 +134,21 @@ export default async function AdminRankingsPage() {
       </Panel>
 
       {/* ตารางผลงานดารา */}
-      <Panel title="ตารางผลงานดาราโดยรวม" subtitle="เรียงตาม Box Office รวม (สูงสุด 10 คน)"
-        icon={Users} tone="text-sky-500" href="/admin/actors" hrefLabel="จัดการดารา" flush>
+      <Panel title={r.perActor} subtitle={r.perActorHint}
+        icon={Users} href="/admin/actors" hrefLabel={t.admin.manageActors} flush>
         {d.perActor.length === 0 ? (
-          <p className="p-5 text-sm text-zinc-500">ยังไม่มีข้อมูลดารา</p>
+          <p className="p-5 text-sm text-zinc-500">{r.noActors}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] text-left text-sm">
               <thead className="text-xs uppercase text-zinc-500 dark:text-zinc-400">
                 <tr>
-                  <th className="px-5 py-3 font-medium">ดารา</th>
-                  <th className={thCls}>สัญชาติ</th>
-                  <th className={`${thCls} text-right`}>หนัง</th>
-                  <th className={`${thCls} w-56`}>Box Office รวม</th>
-                  <th className={`${thCls} text-right`}>เรตติ้งเฉลี่ย</th>
-                  <th className="px-5 py-3 text-right font-medium">รางวัล</th>
+                  <th className="px-5 py-3 font-medium">{r.colActor}</th>
+                  <th className={thCls}>{r.colNationality}</th>
+                  <th className={`${thCls} text-right`}>{r.colMovies}</th>
+                  <th className={`${thCls} w-56`}>{r.colBoxTotal}</th>
+                  <th className={`${thCls} text-right`}>{r.colAvgRating}</th>
+                  <th className="px-5 py-3 text-right font-medium">{r.colAwards}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
@@ -173,7 +174,7 @@ export default async function AdminRankingsPage() {
                       {a.avgRating !== null ? a.avgRating.toFixed(2) : "-"}
                     </td>
                     <td className="px-5 py-3 text-right font-semibold tabular-nums text-amber-500">
-                      {fmtNumber(a.awards)}
+                      {a.awards === null ? "-" : fmtNumber(a.awards)}
                     </td>
                   </tr>
                 ))}

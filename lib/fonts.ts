@@ -1,14 +1,14 @@
-import { Noto_Serif_Thai, Playfair_Display, Prompt } from "next/font/google";
+import { Bodoni_Moda, Cinzel, IBM_Plex_Sans_Thai, Noto_Serif_Thai } from "next/font/google";
 
-/** ฟอนต์เนื้อหา (ไทย + อังกฤษ) — ใช้ร่วมกับหน้า /login เดิม */
-export const fontSans = Prompt({
+/** ฟอนต์เนื้อหา (ไทย + อังกฤษ) */
+export const fontSans = IBM_Plex_Sans_Thai({
   subsets: ["thai", "latin"],
   weight: ["300", "400", "500", "600"],
   variable: "--font-sans-th",
   display: "swap",
 });
 
-/** ฟอนต์ serif ภาษาไทย — ใช้ร่วมกับหน้า /login เดิม และเป็นฟอนต์หัวข้อภาษาไทยของหน้าแรก */
+/** ฟอนต์ serif ภาษาไทย — หัวข้อภาษาไทย (จับคู่กับ Cinzel ผ่านคลาส font-display) */
 export const fontSerif = Noto_Serif_Thai({
   subsets: ["thai", "latin"],
   variable: "--font-serif-th",
@@ -16,12 +16,22 @@ export const fontSerif = Noto_Serif_Thai({
 });
 
 /**
- * ฟอนต์หัวข้อตัวอักษรละติน (Playfair Display)
- * จับคู่กับ fontSerif ผ่านคลาส font-display: เบราว์เซอร์เลือกฟอนต์ตามตัวอักษรแต่ละตัวเอง
+ * ฟอนต์หัวข้อตัวอักษรละติน (Cinzel — แบบตัวอักษรสลักบนป้ายโรงละคร)
+ * ใช้กับโลโก้ ชื่อหนัง และตัวเลข Top 10 · เบราว์เซอร์สลับไป Noto Serif Thai เองเมื่อเจออักษรไทย
  */
-export const playfair = Playfair_Display({
+export const cinzel = Cinzel({
+  subsets: ["latin"],
+  variable: "--font-cinzel",
+  display: "swap",
+});
+
+/**
+ * ฟอนต์หัวข้อแบบนิตยสาร (Bodoni Moda) — ใช้กับหน้าแรกแบบ "ทำเนียบดารา" ผ่านคลาส font-editorial
+ * อักษรไทยสลับไป Noto Serif Thai อัตโนมัติ
+ */
+export const bodoni = Bodoni_Moda({
   subsets: ["latin"],
   style: ["normal", "italic"],
-  variable: "--font-playfair",
+  variable: "--font-bodoni",
   display: "swap",
 });

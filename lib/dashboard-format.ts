@@ -22,16 +22,6 @@ export function tally(items: string[]): { label: string; value: number }[] {
     .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
 }
 
-export const fmtDate = (d: Date) =>
-  d.toLocaleDateString("th-TH", { dateStyle: "medium", timeZone: "Asia/Bangkok" });
-
-export const nowTh = () =>
-  new Date().toLocaleString("th-TH", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: "Asia/Bangkok",
-  });
-
 /** เก็บ n อันดับแรก ส่วนที่เหลือรวมเป็น "อื่นๆ" (กันรายการยาวเกินเมื่อข้อมูลเยอะ) */
 export function topWithOther(
   rows: { label: string; value: number }[],

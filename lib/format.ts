@@ -28,3 +28,11 @@ export function calcAge(birth: Date | null): number | null {
   if (beforeBirthday) age -= 1;
   return age;
 }
+
+/** ตัดข้อความยาว (เช่น ประวัติดารา) ก่อนส่งไปหน้าเว็บ — การ์ดแสดงแค่ไม่กี่บรรทัดอยู่แล้ว */
+export function truncateText(text: string, max: number): string {
+  const clean = text.replace(/\s+/g, " ").trim();
+  return clean.length > max ? `${clean.slice(0, max - 1).trimEnd()}…` : clean;
+}
+
+// จำนวนรางวัลย้ายไปเป็น t.common.awards(n) ใน lib/i18n (null = "ไม่มีข้อมูล" ไม่ใช่ 0)
