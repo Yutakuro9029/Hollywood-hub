@@ -1,8 +1,8 @@
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
 
 /**
- * Skeleton primitive — บล็อกสีเทาเรียบ ๆ พร้อมแอนิเมชัน pulse
- * ปรับขนาด/รูปทรงผ่าน className (เช่น "h-4 w-32", "aspect-[2/3] rounded-xl")
+ * Skeleton primitive — บล็อกเทาเข้มมีประกายทองวิ่งผ่าน (คลาส .skeleton ใน globals.css)
+ * ปรับขนาด/รูปทรงผ่าน className (เช่น "h-4 w-32", "aspect-[2/3]")
  * ปิดแอนิเมชันอัตโนมัติสำหรับผู้ใช้ที่ตั้งค่า reduced motion
  */
 export function Skeleton({
@@ -12,7 +12,7 @@ export function Skeleton({
   return (
     <div
       aria-hidden
-      className={`animate-pulse rounded-md bg-zinc-200 motion-reduce:animate-none dark:bg-zinc-800/80 ${className}`}
+      className={`skeleton rounded-[4px] ${className}`}
       {...props}
     />
   );
@@ -23,11 +23,12 @@ export function Skeleton({
  * (ตัว Skeleton แต่ละชิ้นเป็น aria-hidden อยู่แล้ว)
  */
 export function SkeletonRegion({
-  label = "กำลังโหลดข้อมูล",
+  label,
   className = "",
   children,
 }: {
-  label?: string;
+  /** ข้อความที่ screen reader อ่าน (ตามภาษาที่เลือก) */
+  label: string;
   className?: string;
   children: ReactNode;
 }) {
@@ -39,6 +40,5 @@ export function SkeletonRegion({
   );
 }
 
-/** กรอบการ์ดมาตรฐานของโปรเจกต์ (ขอบ + พื้นหลังเข้ากับธีม Light/Dark) */
-export const skeletonCardCls =
-  "rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-slate-900";
+/** กรอบการ์ดมาตรฐานของโปรเจกต์ */
+export const skeletonCardCls = "rounded-card border border-line bg-surface";

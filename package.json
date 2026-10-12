@@ -7,6 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "seed": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON prisma/seed-tmdb.ts && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON prisma/seed-awards.ts",
+    "seed:users": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON prisma/seed-users.ts",
+    "seed:awards": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON prisma/seed-awards.ts",
+    "backfill:overview-en": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON prisma/backfill-overview-en.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -19,7 +23,8 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "recharts": "^3.10.1",
-    "server-only": "^0.0.1"
+    "server-only": "^0.0.1",
+    "sweetalert2": "^11.26.25"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

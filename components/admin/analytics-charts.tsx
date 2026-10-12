@@ -25,6 +25,7 @@ import {
   TrendingUp,
   X,
 } from "lucide-react";
+import { useI18n } from "@/lib/i18n/client";
 
 /* ======================================================================
  * Types (ข้อมูลที่ Server Component ส่งมา — ต้อง serialize ได้)
@@ -33,10 +34,10 @@ import {
 export type ChartMovie = {
   id: number;
   title: string;
-  actorId: number;
+  actorIds: number[]; // นักแสดงทุกคนในเรื่อง
   genres: string[];
   year: number | null;
-  box: number; // ล้านดอลลาร์
+  box: number; // ล้านดอลลาร์ (0 ถ้าไม่ทราบรายได้)
   rating: number | null;
 };
 
@@ -64,7 +65,7 @@ const fmt = (kind: Fmt, n: number) => (kind === "money" ? money(n) : n.toLocaleS
 const truncate = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
 const avg = (xs: number[]) => (xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : null);
 
-const card = "rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-slate-900";
+const card = "rounded-[4px] border border-line bg-surface";
 
 // สีแกน/กริดอิง currentColor เพื่อให้เปลี่ยนตาม Light/Dark อัตโนมัติ
 const axisProps = {
@@ -79,37 +80,37 @@ const grid = { stroke: "currentColor", strokeOpacity: 0.12 } as const;
  * ==================================================================== */
 
 function Panel({
-  title, subtitle, icon: Icon, tone, action, className = "", children,
+  title, subtitle, icon: Icon, action, className = "", children,
 }: {
   title: string;
   subtitle?: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
-  tone: string;
   action?: ReactNode;
   className?: string;
   children: ReactNode;
 }) {
   return (
     <section className={`${card} flex flex-col ${className}`}>
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-zinc-200 px-5 py-4 dark:border-zinc-800">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line px-5 py-4">
         <div className="min-w-0">
-          <h2 className="flex items-center gap-2 font-semibold">
-            <Icon size={18} className={tone} />
+          <h2 className="flex items-center gap-2 font-editorial text-xl text-cream">
+            <Icon size={16} className="shrink-0 text-gold-light" />
             <span className="truncate">{title}</span>
           </h2>
-          {subtitle && <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{subtitle}</p>}
+          {subtitle && <p className="mt-0.5 text-xs text-muted">{subtitle}</p>}
         </div>
         {action}
       </div>
-      <div className="flex-1 p-5 text-zinc-500 dark:text-zinc-400">{children}</div>
+      <div className="flex-1 p-5 text-muted">{children}</div>
     </section>
   );
 }
 
 function Empty() {
+  const { t } = useI18n();
   return (
     <p className="py-16 text-center text-sm text-zinc-500 dark:text-zinc-400">
-      ไม่มีข้อมูลตรงกับตัวกรองที่เลือก
+      {t.admin.an.empty}
     </p>
   );
 }
@@ -141,7 +142,7 @@ function Segmented<T extends string>({
 /* ---------- Tooltip ---------- */
 
 const tipBox =
-  "rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-800 shadow-lg dark:border-zinc-700 dark:bg-slate-800 dark:text-zinc-100";
+  "rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-800 shadow-lg dark:border-zinc-700 dark:bg-line dark:text-zinc-100";
 
 type TipEntry = {
   name?: string | number;
@@ -157,6 +158,7 @@ function Tip({
   label?: string | number;
   kind?: Fmt;
 }) {
+  const { t } = useI18n();
   if (!active || !payload?.length) return null;
   const extra = payload[0]?.payload?.extra;
   return (
@@ -172,7 +174,7 @@ function Tip({
           {extra.slice(0, 6).map((t) => (
             <li key={t}>• {t}</li>
           ))}
-          {extra.length > 6 && <li>… และอีก {extra.length - 6} เรื่อง</li>}
+          {extra.length > 6 && <li>{t.admin.an.andMore(extra.length - 6)}</li>}
         </ul>
       )}
     </div>
@@ -354,9 +356,9 @@ const BUCKETS = [
 ];
 
 const ACTOR_METRICS = {
-  box: { label: "Box Office", kind: "money" as Fmt },
-  awards: { label: "รางวัล", kind: "int" as Fmt },
-  movies: { label: "จำนวนหนัง", kind: "int" as Fmt },
+  box: { kind: "money" as Fmt },
+  awards: { kind: "int" as Fmt },
+  movies: { kind: "int" as Fmt },
 };
 
 export default function DashboardCharts({
@@ -366,6 +368,9 @@ export default function DashboardCharts({
   movies: ChartMovie[];
   actors: ChartActor[];
 }) {
+  const { t } = useI18n();
+  const a = t.admin.an;
+  const metricLabel = { box: "Box Office", awards: a.awards, movies: a.movieCount } as const;
   const [genre, setGenre] = useState<string | null>(null);
   const [actorKey, setActorKey] = useState<string | null>(null); // ใช้ชื่อดาราเป็นคีย์ (รวมแถวที่ชื่อซ้ำ)
   const [metric, setMetric] = useState<"box" | "count">("box");
@@ -435,7 +440,7 @@ export default function DashboardCharts({
   );
   // byActor: กรองเฉพาะดารา (ใช้กับ donut genre เพื่อให้เปลี่ยน genre ได้)
   const byActor = useMemo(
-    () => (actorKey !== null ? base.filter((m) => nameOf.get(m.actorId) === actorKey) : base),
+    () => (actorKey !== null ? base.filter((m) => m.actorIds.some((id) => nameOf.get(id) === actorKey)) : base),
     [base, actorKey, nameOf],
   );
   // filtered: กรองทั้งหมด
@@ -479,9 +484,9 @@ export default function DashboardCharts({
     }
     const shown = new Set(top.map((t) => t.name));
     const rest = all.filter((a) => !shown.has(a.name)).reduce((s, a) => s + a.value, 0);
-    if (rest > 0) top.push({ name: "อื่นๆ", value: rest, other: true });
+    if (rest > 0) top.push({ name: a.other, value: rest, other: true });
     return top;
-  }, [byActor, genre]);
+  }, [byActor, genre, a.other]);
 
   /* ---- 3) Top 10 ดารา (สลับตัวชี้วัดได้) ---- */
   const actorBars: BarDatum[] = useMemo(() => {
@@ -493,11 +498,14 @@ export default function DashboardCharts({
       agg.set(a.name, cur);
     }
     for (const m of byGenre) {
-      const name = nameOf.get(m.actorId);
-      const cur = name !== undefined ? agg.get(name) : undefined;
-      if (!cur) continue;
-      cur.box += m.box;
-      cur.movies += 1;
+      // นับหนังหนึ่งเรื่องครั้งเดียวต่อดาราหนึ่งชื่อ
+      const names = new Set(m.actorIds.map((id) => nameOf.get(id)));
+      for (const name of names) {
+        const cur = name !== undefined ? agg.get(name) : undefined;
+        if (!cur) continue;
+        cur.box += m.box;
+        cur.movies += 1;
+      }
     }
     const rows = [...agg.entries()]
       .map(([name, v]) => ({ name, value: v[actorMetric] }))
@@ -535,28 +543,28 @@ export default function DashboardCharts({
 
   const hasFilter = genre !== null || actorKey !== null || yearFrom !== null || yearTo !== null;
   const fieldCls =
-    "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-slate-950 dark:text-zinc-100 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-400/30 dark:focus:border-amber-400";
+    "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-ink dark:text-zinc-100 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-400/30 dark:focus:border-amber-400";
   const labelCls = "mb-1.5 block text-xs font-medium text-zinc-600 dark:text-zinc-300";
   const strong = "font-semibold text-zinc-800 dark:text-zinc-100";
 
   return (
     <div className="space-y-6">
       {/* ---------------- Filter / summary bar ---------------- */}
-      <section className={`${card} p-4`} aria-label="ตัวกรองกราฟ">
+      <section className={`${card} p-4`} aria-label={a.filters}>
         <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1">
           <span className="inline-flex items-center gap-1.5 text-sm font-medium">
-            <Filter size={16} className="text-amber-400" /> ตัวกรอง
+            <Filter size={16} className="text-amber-400" /> {a.filter}
           </span>
           <span className="text-xs text-zinc-500 dark:text-zinc-400">
-            เลือกจากช่องด้านล่าง หรือคลิกชิ้น Genre / แท่งดาราในกราฟก็ได้
+            {a.filterHint}
           </span>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1.4fr_8rem_8rem_auto] lg:items-end">
           <div>
-            <label htmlFor="f-genre" className={labelCls}>ประเภท (Genre)</label>
+            <label htmlFor="f-genre" className={labelCls}>{a.genre}</label>
             <select id="f-genre" value={genre ?? ""} onChange={(e) => setGenre(e.target.value || null)} className={fieldCls}>
-              <option value="">ทั้งหมด</option>
+              <option value="">{a.all}</option>
               {allGenres.map((g) => (
                 <option key={g} value={g}>{g}</option>
               ))}
@@ -564,13 +572,13 @@ export default function DashboardCharts({
           </div>
 
           <div>
-            <label htmlFor="f-actor" className={labelCls}>ดารา</label>
+            <label htmlFor="f-actor" className={labelCls}>{a.actor}</label>
             <input
               id="f-actor"
               list="f-actor-list"
               value={actorText}
               onChange={(e) => onActorText(e.target.value)}
-              placeholder="พิมพ์ชื่อแล้วเลือกจากรายการ"
+              placeholder={a.actorPlaceholder}
               autoComplete="off"
               className={`${fieldCls} placeholder:text-zinc-400 dark:placeholder:text-zinc-500`}
             />
@@ -582,9 +590,9 @@ export default function DashboardCharts({
           </div>
 
           <div>
-            <label htmlFor="f-from" className={labelCls}>ตั้งแต่ปี</label>
+            <label htmlFor="f-from" className={labelCls}>{a.fromYear}</label>
             <select id="f-from" value={yearFrom ?? ""} onChange={(e) => changeFrom(e.target.value)} className={fieldCls}>
-              <option value="">ทั้งหมด</option>
+              <option value="">{a.all}</option>
               {years.map((y) => (
                 <option key={y} value={y}>{y}</option>
               ))}
@@ -592,9 +600,9 @@ export default function DashboardCharts({
           </div>
 
           <div>
-            <label htmlFor="f-to" className={labelCls}>ถึงปี</label>
+            <label htmlFor="f-to" className={labelCls}>{a.toYear}</label>
             <select id="f-to" value={yearTo ?? ""} onChange={(e) => changeTo(e.target.value)} className={fieldCls}>
-              <option value="">ทั้งหมด</option>
+              <option value="">{a.all}</option>
               {years.map((y) => (
                 <option key={y} value={y}>{y}</option>
               ))}
@@ -607,17 +615,17 @@ export default function DashboardCharts({
             disabled={!hasFilter}
             className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-zinc-300 px-4 py-2 text-sm text-zinc-700 transition hover:border-amber-400 hover:bg-amber-50 hover:text-amber-700 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-zinc-300 disabled:hover:bg-transparent disabled:hover:text-zinc-700 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-amber-400 dark:hover:bg-amber-400/10 dark:hover:text-amber-300 dark:disabled:hover:border-zinc-700 dark:disabled:hover:bg-transparent dark:disabled:hover:text-zinc-300"
           >
-            <X size={14} /> ล้าง
+            <X size={14} /> {a.clear}
           </button>
         </div>
 
         {actorText !== "" && actorKey === null && (
-          <p className="mt-2 text-xs text-rose-500">ไม่พบดาราชื่อนี้ — กรุณาเลือกจากรายการที่แนะนำ</p>
+          <p className="mt-2 text-xs text-rose-500">{a.actorNotFound}</p>
         )}
 
         <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
-          แสดง <span className={strong}>{summary.count}</span> / {movies.length} เรื่อง · Box Office{" "}
-          <span className={strong}>{money(summary.box)}</span> · เรตติ้งเฉลี่ย{" "}
+          {a.showing} <span className={strong}>{summary.count}</span>{a.ofMovies(movies.length)}
+          <span className={strong}>{money(summary.box)}</span>{a.avgRating}
           <span className={strong}>{summary.rating !== null ? summary.rating.toFixed(2) : "-"}</span>
         </p>
       </section>
@@ -625,10 +633,9 @@ export default function DashboardCharts({
       {/* ---------------- Row 1: แนวโน้ม + Genre ---------------- */}
       <div className="grid gap-6 xl:grid-cols-3">
         <Panel
-          title="แนวโน้มรายปีที่ฉาย"
-          subtitle="ลากแถบด้านล่างเพื่อซูมช่วงปี"
+          title={a.trend}
+          subtitle={a.trendHint}
           icon={TrendingUp}
-          tone="text-amber-400"
           className="xl:col-span-2"
           action={
             <div className="flex flex-wrap gap-2">
@@ -637,15 +644,15 @@ export default function DashboardCharts({
                 onChange={setMetric}
                 options={[
                   { value: "box", label: "Box Office" },
-                  { value: "count", label: "จำนวนหนัง" },
+                  { value: "count", label: a.movieCount },
                 ]}
               />
               <Segmented
                 value={mode}
                 onChange={setMode}
                 options={[
-                  { value: "area", label: "เส้น" },
-                  { value: "bar", label: "แท่ง" },
+                  { value: "area", label: a.line },
+                  { value: "bar", label: a.bar },
                 ]}
               />
             </div>
@@ -674,7 +681,7 @@ export default function DashboardCharts({
                   <Area
                     type="monotone"
                     dataKey={metric}
-                    name={metric === "box" ? "Box Office" : "จำนวนหนัง"}
+                    name={metric === "box" ? "Box Office" : a.movieCount}
                     stroke={AMBER}
                     strokeWidth={2.5}
                     fill="url(#yearFill)"
@@ -700,7 +707,7 @@ export default function DashboardCharts({
                   />
                   <Bar
                     dataKey={metric}
-                    name={metric === "box" ? "Box Office" : "จำนวนหนัง"}
+                    name={metric === "box" ? "Box Office" : a.movieCount}
                     fill={AMBER}
                     radius={[6, 6, 0, 0]}
                     maxBarSize={48}
@@ -715,29 +722,27 @@ export default function DashboardCharts({
         </Panel>
 
         <Panel
-          title="สัดส่วนตามประเภท"
-          subtitle="6 อันดับแรก · คลิกเพื่อกรอง"
+          title={a.genreShare}
+          subtitle={a.genreShareHint}
           icon={PieIcon}
-          tone="text-violet-500"
         >
-          <Donut data={genreData} centerLabel="รายการ" selected={genre} onSelect={toggleGenre} />
+          <Donut data={genreData} centerLabel={a.items} selected={genre} onSelect={toggleGenre} />
         </Panel>
       </div>
 
       {/* ---------------- Row 2: Top ดารา + เรตติ้ง ---------------- */}
       <div className="grid gap-6 lg:grid-cols-2">
         <Panel
-          title={`Top ${TOP_N} ดารา`}
-          subtitle="คลิกแท่งเพื่อกรองเฉพาะดาราคนนั้น"
+          title={a.topActors(TOP_N)}
+          subtitle={a.topActorsHint}
           icon={BarChart3}
-          tone="text-emerald-500"
           action={
             <Segmented
               value={actorMetric}
               onChange={setActorMetric}
               options={(Object.keys(ACTOR_METRICS) as (keyof typeof ACTOR_METRICS)[]).map((k) => ({
                 value: k,
-                label: ACTOR_METRICS[k].label,
+                label: metricLabel[k],
               }))}
             />
           }
@@ -745,18 +750,17 @@ export default function DashboardCharts({
           <HBar
             data={actorBars}
             kind={ACTOR_METRICS[actorMetric].kind}
-            seriesName={ACTOR_METRICS[actorMetric].label}
+            seriesName={metricLabel[actorMetric]}
             onPick={(k) => toggleActor(k)}
           />
         </Panel>
 
         <Panel
-          title="การกระจายคะแนนเรตติ้ง"
-          subtitle="ชี้แท่งเพื่อดูรายชื่อหนังในช่วงคะแนนนั้น"
+          title={a.ratingDist}
+          subtitle={a.ratingDistHint}
           icon={Star}
-          tone="text-sky-500"
         >
-          <Column data={histogram} seriesName="จำนวนหนัง" />
+          <Column data={histogram} seriesName={a.movieCount} />
         </Panel>
       </div>
     </div>

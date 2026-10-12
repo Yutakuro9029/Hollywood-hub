@@ -1,61 +1,46 @@
-import { Skeleton, SkeletonRegion, skeletonCardCls } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonRegion } from "@/components/ui/skeleton";
+import { getI18n } from "@/lib/i18n/server";
 
-export default function MovieDetailLoading() {
+/** โครงหน้ารายละเอียดหนังระหว่างโหลด: backdrop + โปสเตอร์ + ข้อมูล + แถวนักแสดง */
+export default async function MovieDetailLoading() {
+  const { t } = await getI18n();
   return (
-    <SkeletonRegion label="กำลังโหลดข้อมูลภาพยนตร์">
-      {/* Backdrop กว้าง */}
-      <Skeleton className="h-56 w-full rounded-none sm:h-72 md:h-96" />
-
-      <div className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
-        <div className="grid gap-8 md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr]">
-          {/* โปสเตอร์แนวตั้ง 2:3 (ซ้อนทับ backdrop บนจอ md ขึ้นไป) */}
-          <div className="-mt-20 mx-auto w-48 md:-mt-32 md:w-full">
-            <Skeleton className="aspect-[2/3] w-full rounded-2xl ring-4 ring-zinc-50 dark:ring-slate-950" />
-          </div>
-
-          <div className="space-y-6 pt-2 md:pt-8">
-            {/* ชื่อเรื่อง + meta */}
-            <div className="space-y-4">
-              <Skeleton className="h-10 w-4/5 md:h-12" />
-              <div className="flex flex-wrap gap-2">
-                <Skeleton className="h-7 w-16 rounded-full" />
-                <Skeleton className="h-7 w-24 rounded-full" />
-                <Skeleton className="h-7 w-20 rounded-full" />
-                <Skeleton className="h-7 w-28 rounded-full bg-amber-200/70 dark:bg-amber-400/15" />
+    <SkeletonRegion label={t.movie.loading}>
+      <div className="relative">
+        <div className="absolute inset-x-0 top-0 h-[62vh] min-h-[420px] bg-surface lg:h-[78vh]" />
+        <div className="relative mx-auto max-w-[1400px] px-4 pt-28 sm:px-6 sm:pt-40 lg:px-10 lg:pt-[34vh]">
+          <div className="grid gap-8 md:grid-cols-[240px_minmax(0,1fr)] md:items-end lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-12">
+            <Skeleton className="mx-auto aspect-[2/3] w-48 md:mx-0 md:w-full" />
+            <div className="space-y-5">
+              <Skeleton className="h-12 w-3/4 sm:h-16" />
+              <Skeleton className="h-4 w-56" />
+              <div className="flex gap-2">
+                <Skeleton className="h-7 w-20" />
+                <Skeleton className="h-7 w-24" />
+                <Skeleton className="h-7 w-20" />
               </div>
-            </div>
-
-            {/* สถิติ: เรตติ้ง / รายได้ / ปีที่ฉาย */}
-            <div className="grid grid-cols-3 gap-3">
-              {Array.from({ length: 3 }, (_, i) => (
-                <div key={i} className={`${skeletonCardCls} space-y-2.5 p-4`}>
-                  <Skeleton className="h-3 w-14" />
-                  <Skeleton className="h-6 w-16 bg-amber-200/70 dark:bg-amber-400/15" />
-                </div>
-              ))}
-            </div>
-
-            {/* กล่องเรื่องย่อ */}
-            <div className={`${skeletonCardCls} space-y-3 p-6`}>
-              <Skeleton className="h-5 w-28" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-11/12" />
-              <Skeleton className="h-4 w-3/5" />
-            </div>
-
-            {/* การ์ดดารานำ */}
-            <div className="space-y-3">
-              <Skeleton className="h-5 w-24" />
-              <div className={`${skeletonCardCls} flex items-center gap-4 p-4 sm:max-w-md`}>
-                <Skeleton className="h-16 w-16 shrink-0 rounded-2xl" />
-                <div className="flex-1 space-y-2.5">
-                  <Skeleton className="h-5 w-3/4" />
-                  <Skeleton className="h-3.5 w-1/2" />
-                </div>
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-4 w-full max-w-2xl" />
+              <Skeleton className="h-4 w-5/6 max-w-xl" />
+              <div className="flex gap-3 pt-2">
+                <Skeleton className="h-12 w-36" />
+                <Skeleton className="h-12 w-44" />
               </div>
             </div>
           </div>
+          <Skeleton className="mt-12 h-20 w-full" />
+        </div>
+      </div>
+
+      <div className="mx-auto mt-20 max-w-[1400px] px-4 sm:px-6 lg:px-10">
+        <Skeleton className="h-7 w-32" />
+        <div className="mt-6 flex gap-8 overflow-hidden">
+          {Array.from({ length: 7 }, (_, i) => (
+            <div key={i} className="w-28 shrink-0 sm:w-36">
+              <Skeleton className="aspect-square w-full rounded-full" />
+              <Skeleton className="mx-auto mt-4 h-4 w-3/4" />
+            </div>
+          ))}
         </div>
       </div>
     </SkeletonRegion>

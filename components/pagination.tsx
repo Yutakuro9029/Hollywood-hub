@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { getI18n } from "@/lib/i18n/server";
 
 type Props = {
   page: number;
@@ -24,14 +25,13 @@ function buildPages(page: number, total: number): (number | "…")[] {
 }
 
 const itemBase =
-  "inline-flex h-10 min-w-10 items-center justify-center rounded-lg border px-3 text-sm font-medium transition";
-const itemIdle =
-  "border-zinc-300 text-zinc-700 hover:border-amber-500 hover:text-amber-700 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-amber-400 dark:hover:text-amber-300";
-const itemDisabled =
-  "cursor-not-allowed border-zinc-200 text-zinc-400 dark:border-zinc-800 dark:text-zinc-600";
+  "inline-flex h-10 min-w-10 items-center justify-center rounded-[4px] border px-3 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-light";
+const itemIdle = "border-line text-cream/85 hover:border-gold-dark hover:text-gold-light";
+const itemDisabled = "cursor-not-allowed border-line/60 text-muted/50";
 
-export default function Pagination({ page, totalPages, basePath, params = {} }: Props) {
+export default async function Pagination({ page, totalPages, basePath, params = {} }: Props) {
   if (totalPages <= 1) return null;
+  const { t } = await getI18n();
 
   const hrefFor = (p: number) => {
     const sp = new URLSearchParams();
@@ -45,32 +45,32 @@ export default function Pagination({ page, totalPages, basePath, params = {} }: 
 
   return (
     <nav
-      aria-label="แบ่งหน้า"
+      aria-label={t.common.pagination}
       className="mt-10 flex flex-wrap items-center justify-center gap-2"
     >
       {page > 1 ? (
         <Link href={hrefFor(page - 1)} className={`${itemBase} ${itemIdle} gap-1`}>
           <ChevronLeft className="h-4 w-4" aria-hidden />
-          <span className="hidden sm:inline">ก่อนหน้า</span>
-          <span className="sr-only sm:hidden">ก่อนหน้า</span>
+          <span className="hidden sm:inline">{t.common.prev}</span>
+          <span className="sr-only sm:hidden">{t.common.prev}</span>
         </Link>
       ) : (
         <span aria-disabled className={`${itemBase} ${itemDisabled} gap-1`}>
           <ChevronLeft className="h-4 w-4" aria-hidden />
-          <span className="hidden sm:inline">ก่อนหน้า</span>
+          <span className="hidden sm:inline">{t.common.prev}</span>
         </span>
       )}
 
       {buildPages(page, totalPages).map((p, i) =>
         p === "…" ? (
-          <span key={`gap-${i}`} className="px-1 text-zinc-500" aria-hidden>
+          <span key={`gap-${i}`} className="px-1 text-muted" aria-hidden>
             …
           </span>
         ) : p === page ? (
           <span
             key={p}
             aria-current="page"
-            className={`${itemBase} border-amber-400 bg-amber-400 text-slate-950`}
+            className={`${itemBase} border-gold bg-gold text-ink`}
           >
             {p}
           </span>
@@ -83,13 +83,13 @@ export default function Pagination({ page, totalPages, basePath, params = {} }: 
 
       {page < totalPages ? (
         <Link href={hrefFor(page + 1)} className={`${itemBase} ${itemIdle} gap-1`}>
-          <span className="hidden sm:inline">ถัดไป</span>
-          <span className="sr-only sm:hidden">ถัดไป</span>
+          <span className="hidden sm:inline">{t.common.next}</span>
+          <span className="sr-only sm:hidden">{t.common.next}</span>
           <ChevronRight className="h-4 w-4" aria-hidden />
         </Link>
       ) : (
         <span aria-disabled className={`${itemBase} ${itemDisabled} gap-1`}>
-          <span className="hidden sm:inline">ถัดไป</span>
+          <span className="hidden sm:inline">{t.common.next}</span>
           <ChevronRight className="h-4 w-4" aria-hidden />
         </span>
       )}

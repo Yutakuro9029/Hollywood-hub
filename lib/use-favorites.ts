@@ -1,6 +1,16 @@
 "use client";
 
-import { useCallback, useMemo, useSyncExternalStore } from "react";
+import {
+  createContext,
+  createElement,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { clearWatchlist, setActorSaved, setMovieSaved } from "@/app/actions/watchlist";
 
 /* ───────────────────────── Types ───────────────────────── */
 
@@ -24,178 +34,139 @@ interface FavoritesState {
   actors: FavoriteActor[];
 }
 
-/* ───────────────────── Storage + validation ─────────────────────
-   อ่านจาก localStorage แล้ว "ตรวจรูปแบบ" ทุกครั้ง เพราะข้อมูลในเบราว์เซอร์แก้ได้เอง
-   หรืออาจเป็นเวอร์ชันเก่า — ถ้าพัง จะไม่ทำให้หน้าเว็บ crash แค่เริ่มจากรายการว่าง */
+/* ───────────────────── Context ─────────────────────
+   รายการโปรดเก็บในฐานข้อมูลแยกตามบัญชี (ต้องล็อกอิน)
+   - Root layout ดึงข้อมูลของผู้ใช้มาเป็นค่าเริ่มต้น → ปุ่ม/badge/หน้า /watchlist เห็นชุดเดียวกัน
+   - กดบันทึกแล้ว UI เปลี่ยนทันที (optimistic) แล้วค่อยเรียก Server Action
+     ถ้าล้มเหลวจะย้อนกลับ และถ้า session หมดอายุจะพาไปหน้าเข้าสู่ระบบ */
 
-const STORAGE_KEY = "hollywood-hub:favorites:v1";
-
-const EMPTY: FavoritesState = { movies: [], actors: [] };
-
-function isRecord(v: unknown): v is Record<string, unknown> {
-  return typeof v === "object" && v !== null;
-}
-const textOrNull = (v: unknown): string | null =>
-  typeof v === "string" && v.length > 0 ? v : null;
-const numberOrNull = (v: unknown): number | null =>
-  typeof v === "number" && Number.isFinite(v) ? v : null;
-
-function parseMovie(v: unknown): FavoriteMovie | null {
-  if (!isRecord(v)) return null;
-  if (typeof v.id !== "number" || !Number.isInteger(v.id) || v.id <= 0) return null;
-  if (typeof v.title !== "string" || v.title.length === 0) return null;
-  return {
-    id: v.id,
-    title: v.title,
-    poster_url: textOrNull(v.poster_url),
-    rating: numberOrNull(v.rating),
-    year: numberOrNull(v.year),
-  };
+interface FavoritesContextValue {
+  loggedIn: boolean;
+  state: FavoritesState;
+  setState: React.Dispatch<React.SetStateAction<FavoritesState>>;
 }
 
-function parseActor(v: unknown): FavoriteActor | null {
-  if (!isRecord(v)) return null;
-  if (typeof v.id !== "number" || !Number.isInteger(v.id) || v.id <= 0) return null;
-  if (typeof v.name !== "string" || v.name.length === 0) return null;
-  return {
-    id: v.id,
-    name: v.name,
-    avatar_url: textOrNull(v.avatar_url),
-    nationality: textOrNull(v.nationality),
-  };
+const FavoritesContext = createContext<FavoritesContextValue | null>(null);
+
+export function WatchlistProvider({
+  loggedIn,
+  initial,
+  children,
+}: {
+  loggedIn: boolean;
+  initial: FavoritesState;
+  children: ReactNode;
+}) {
+  const [state, setState] = useState(initial);
+  const value = useMemo(() => ({ loggedIn, state, setState }), [loggedIn, state]);
+  return createElement(FavoritesContext.Provider, { value }, children);
 }
 
-function parseList<T extends { id: number }>(
-  raw: unknown,
-  parse: (v: unknown) => T | null,
-): T[] {
-  if (!Array.isArray(raw)) return [];
-  const seen = new Set<number>();
-  const out: T[] = [];
-  for (const item of raw) {
-    const parsed = parse(item);
-    if (parsed && !seen.has(parsed.id)) {
-      seen.add(parsed.id);
-      out.push(parsed);
-    }
-  }
-  return out;
-}
-
-function readStorage(): FavoritesState {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return EMPTY;
-    const data: unknown = JSON.parse(raw);
-    if (!isRecord(data)) return EMPTY;
-    return {
-      movies: parseList(data.movies, parseMovie),
-      actors: parseList(data.actors, parseActor),
-    };
-  } catch {
-    return EMPTY;
-  }
-}
-
-/* ───────────────────── External store ─────────────────────
-   เก็บ state ไว้ระดับ module แล้วให้ React อ่านผ่าน useSyncExternalStore
-   → ทุก component (ปุ่มบนการ์ด, badge ใน Navbar, หน้า /watchlist) เห็นข้อมูลชุดเดียวกัน
-   → ไม่เกิด hydration mismatch เพราะตอน SSR/hydrate ใช้ snapshot ว่าง (EMPTY) เสมอ
-   → แท็บอื่นแก้รายการ จะซิงค์มาอัตโนมัติผ่าน "storage" event */
-
-let cache: FavoritesState | null = null;
-const listeners = new Set<() => void>();
-
-function getSnapshot(): FavoritesState {
-  if (cache === null) cache = readStorage();
-  return cache;
-}
-
-function getServerSnapshot(): FavoritesState {
-  return EMPTY;
-}
-
-function emit() {
-  listeners.forEach((listener) => listener());
-}
-
-function commit(next: FavoritesState) {
-  cache = next;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-  } catch {
-    // Private mode / โควตาเต็ม: ยังใช้งานได้ในหน่วยความจำ แค่ไม่คงอยู่หลังรีเฟรช
-  }
-  emit();
-}
-
-function onStorage(event: StorageEvent) {
-  if (event.key !== null && event.key !== STORAGE_KEY) return; // key === null คือ localStorage.clear()
-  cache = null;
-  emit();
-}
-
-function subscribe(listener: () => void): () => void {
-  if (listeners.size === 0) window.addEventListener("storage", onStorage);
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-    if (listeners.size === 0) {
-      window.removeEventListener("storage", onStorage);
-      cache = null; // ไม่มีใครฟังอยู่ → อ่านใหม่จาก storage ครั้งหน้า กันข้อมูลค้างเก่า
-    }
-  };
-}
-
-/** true หลัง hydrate เสร็จเท่านั้น (ฝั่งเซิร์ฟเวอร์และรอบ hydrate แรกเป็น false) */
-const subscribeNoop = () => () => {};
+/** เก็บเฉพาะฟิลด์ที่ต้องใช้ (ตัด Decimal ของ Prisma หรือฟิลด์อื่นที่ส่งมาเกิน) */
+const pickMovie = (m: FavoriteMovie): FavoriteMovie => ({
+  id: m.id,
+  title: m.title,
+  poster_url: m.poster_url,
+  rating: m.rating,
+  year: m.year,
+});
+const pickActor = (a: FavoriteActor): FavoriteActor => ({
+  id: a.id,
+  name: a.name,
+  avatar_url: a.avatar_url,
+  nationality: a.nationality,
+});
 
 /* ───────────────────────── Hook ───────────────────────── */
 
 export function useFavorites() {
-  const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const mounted = useSyncExternalStore(subscribeNoop, () => true, () => false);
+  const ctx = useContext(FavoritesContext);
+  if (!ctx) throw new Error("useFavorites ต้องอยู่ภายใต้ <WatchlistProvider>");
+  const { loggedIn, state, setState } = ctx;
+  const router = useRouter();
+  const pathname = usePathname();
 
-  /** คืนค่า true ถ้าหลังสลับแล้ว "อยู่ในรายการโปรด" */
-  const toggleMovie = useCallback((movie: FavoriteMovie): boolean => {
-    const clean = parseMovie(movie); // ตัดฟิลด์แปลกปลอม (เช่น Decimal ของ Prisma) ก่อนบันทึก
-    if (!clean) return false;
-    const current = getSnapshot();
-    const exists = current.movies.some((m) => m.id === clean.id);
-    commit({
-      ...current,
-      movies: exists
-        ? current.movies.filter((m) => m.id !== clean.id)
-        : [clean, ...current.movies],
-    });
-    return !exists;
-  }, []);
+  const goLogin = useCallback(() => {
+    router.push(`/login?next=${encodeURIComponent(pathname)}`);
+  }, [router, pathname]);
 
-  const toggleActor = useCallback((actor: FavoriteActor): boolean => {
-    const clean = parseActor(actor);
-    if (!clean) return false;
-    const current = getSnapshot();
-    const exists = current.actors.some((a) => a.id === clean.id);
-    commit({
-      ...current,
-      actors: exists
-        ? current.actors.filter((a) => a.id !== clean.id)
-        : [clean, ...current.actors],
-    });
-    return !exists;
-  }, []);
+  /** เรียก Server Action — ถ้าล้มเหลวให้ย้อน state กลับ */
+  const sync = useCallback(
+    async (action: () => Promise<{ error?: string; code?: string }>, rollback: () => void) => {
+      try {
+        const res = await action();
+        if (res.error) {
+          rollback();
+          // ดูจากรหัส ไม่ใช่ข้อความ (ข้อความเปลี่ยนตามภาษา)
+          if (res.code === "LOGIN_REQUIRED") goLogin();
+          else console.error(res.error);
+        }
+      } catch (err) {
+        rollback();
+        console.error(err);
+      }
+    },
+    [goLogin],
+  );
 
-  const removeMovie = useCallback((id: number) => {
-    const current = getSnapshot();
-    commit({ ...current, movies: current.movies.filter((m) => m.id !== id) });
-  }, []);
+  /** คืนค่า true ถ้าหลังสลับแล้ว "อยู่ในรายการโปรด" (ยังไม่ล็อกอิน → พาไปหน้า login และคืน false) */
+  const toggleMovie = useCallback(
+    (movie: FavoriteMovie): boolean => {
+      if (!loggedIn) {
+        goLogin();
+        return false;
+      }
+      const clean = pickMovie(movie);
+      const exists = state.movies.some((m) => m.id === clean.id);
+      const add = () => setState((s) => ({ ...s, movies: [clean, ...s.movies.filter((m) => m.id !== clean.id)] }));
+      const remove = () => setState((s) => ({ ...s, movies: s.movies.filter((m) => m.id !== clean.id) }));
+      if (exists) remove();
+      else add();
+      void sync(() => setMovieSaved(clean.id, !exists), exists ? add : remove);
+      return !exists;
+    },
+    [loggedIn, goLogin, state.movies, setState, sync],
+  );
 
-  const removeActor = useCallback((id: number) => {
-    const current = getSnapshot();
-    commit({ ...current, actors: current.actors.filter((a) => a.id !== id) });
-  }, []);
+  const toggleActor = useCallback(
+    (actor: FavoriteActor): boolean => {
+      if (!loggedIn) {
+        goLogin();
+        return false;
+      }
+      const clean = pickActor(actor);
+      const exists = state.actors.some((a) => a.id === clean.id);
+      const add = () => setState((s) => ({ ...s, actors: [clean, ...s.actors.filter((a) => a.id !== clean.id)] }));
+      const remove = () => setState((s) => ({ ...s, actors: s.actors.filter((a) => a.id !== clean.id) }));
+      if (exists) remove();
+      else add();
+      void sync(() => setActorSaved(clean.id, !exists), exists ? add : remove);
+      return !exists;
+    },
+    [loggedIn, goLogin, state.actors, setState, sync],
+  );
 
-  const clearAll = useCallback(() => commit(EMPTY), []);
+  const removeMovie = useCallback(
+    (id: number) => {
+      const movie = state.movies.find((m) => m.id === id);
+      if (movie) toggleMovie(movie);
+    },
+    [state.movies, toggleMovie],
+  );
+
+  const removeActor = useCallback(
+    (id: number) => {
+      const actor = state.actors.find((a) => a.id === id);
+      if (actor) toggleActor(actor);
+    },
+    [state.actors, toggleActor],
+  );
+
+  const clearAll = useCallback(() => {
+    const previous = state;
+    setState({ movies: [], actors: [] });
+    void sync(clearWatchlist, () => setState(previous));
+  }, [state, setState, sync]);
 
   const isMovieFavorite = useCallback(
     (id: number) => state.movies.some((m) => m.id === id),
@@ -208,7 +179,7 @@ export function useFavorites() {
 
   return useMemo(
     () => ({
-      mounted,
+      loggedIn,
       favoriteMovies: state.movies,
       favoriteActors: state.actors,
       totalCount: state.movies.length + state.actors.length,
@@ -221,7 +192,7 @@ export function useFavorites() {
       clearAll,
     }),
     [
-      mounted, state, toggleMovie, toggleActor,
+      loggedIn, state, toggleMovie, toggleActor,
       isMovieFavorite, isActorFavorite, removeMovie, removeActor, clearAll,
     ],
   );

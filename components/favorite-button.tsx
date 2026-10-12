@@ -7,6 +7,7 @@ import {
   type FavoriteActor,
   type FavoriteMovie,
 } from "@/lib/use-favorites";
+import { useI18n } from "@/lib/i18n/client";
 
 type Variant = "overlay" | "icon" | "pill";
 
@@ -24,28 +25,28 @@ type Props = (
 };
 
 const base =
-  "inline-flex shrink-0 items-center justify-center transition-colors active:scale-95 disabled:cursor-wait disabled:opacity-60 motion-reduce:transition-none focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-50 dark:focus-visible:ring-offset-slate-950";
+  "inline-flex shrink-0 items-center justify-center transition-colors active:scale-95 motion-reduce:transition-none focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-light focus-visible:ring-offset-2 focus-visible:ring-offset-ink";
 
 const variantCls: Record<Variant, { on: string; off: string }> = {
   overlay: {
-    on: "absolute right-2 top-2 z-10 h-9 w-9 rounded-full bg-amber-400 text-slate-950 shadow-lg shadow-amber-500/30 ring-1 ring-amber-300",
-    off: "absolute right-2 top-2 z-10 h-9 w-9 rounded-full bg-slate-950/65 text-zinc-100 ring-1 ring-white/20 backdrop-blur-md hover:bg-slate-950/85 hover:text-amber-300",
+    on: "absolute right-2 top-2 z-10 h-8 w-8 rounded-[4px] bg-gold text-ink",
+    off: "absolute right-2 top-2 z-10 h-8 w-8 rounded-[4px] bg-ink/70 text-cream backdrop-blur-sm hover:text-gold-light",
   },
   icon: {
-    on: "h-9 w-9 rounded-lg border border-amber-400 bg-amber-400/15 text-amber-600 dark:text-amber-300",
-    off: "h-9 w-9 rounded-lg border border-zinc-300 text-zinc-600 hover:border-amber-400 hover:text-amber-600 dark:border-zinc-700 dark:text-zinc-300 dark:hover:text-amber-300",
+    on: "h-9 w-9 rounded-[4px] border border-gold bg-gold/15 text-gold-light",
+    off: "h-9 w-9 rounded-[4px] border border-line text-cream/80 hover:border-gold-dark hover:text-gold-light",
   },
   pill: {
-    on: "gap-2 rounded-lg border border-amber-400 bg-amber-400 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-300",
-    off: "gap-2 rounded-lg border border-amber-500/70 px-4 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-400 hover:text-slate-950 dark:border-amber-400/60 dark:text-amber-300 dark:hover:text-slate-950",
+    on: "gap-2 rounded-[4px] border border-gold bg-gold/15 px-5 py-2.5 text-sm font-medium text-gold-light",
+    off: "gap-2 rounded-[4px] border border-gold/70 px-5 py-2.5 text-sm font-medium text-gold-light hover:border-gold hover:bg-gold/10",
   },
 };
 
 export default function FavoriteButton(props: Props) {
   const { variant = "icon", className = "" } = props;
-  const { mounted, isMovieFavorite, isActorFavorite, toggleMovie, toggleActor } =
-    useFavorites();
+  const { isMovieFavorite, isActorFavorite, toggleMovie, toggleActor } = useFavorites();
   const iconRef = useRef<HTMLSpanElement>(null);
+  const { t } = useI18n();
 
   const saved =
     props.kind === "movie"
@@ -76,20 +77,15 @@ export default function FavoriteButton(props: Props) {
     if (nowSaved) pop();
   }
 
-  const label = saved
-    ? "บันทึกแล้ว"
-    : props.kind === "movie"
-      ? "บันทึกเรื่องนี้"
-      : "บันทึกดารา";
+  const label = saved ? t.favorite.inList : props.kind === "movie" ? t.favorite.addMovie : t.favorite.addActor;
 
   return (
     <button
       type="button"
       onClick={handleClick}
-      disabled={!mounted}
       aria-pressed={saved}
-      aria-label={`บันทึก ${name} ไว้ในรายการโปรด`}
-      title={saved ? "นำออกจากรายการโปรด" : "บันทึกไว้ในรายการโปรด"}
+      aria-label={t.favorite.aria(name)}
+      title={saved ? t.favorite.removeTitle : t.favorite.addTitle}
       className={`${base} ${saved ? variantCls[variant].on : variantCls[variant].off} ${className}`}
     >
       <span ref={iconRef} className="inline-flex">

@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { Film, Home } from "lucide-react";
+import { getI18n } from "@/lib/i18n/server";
 
-export default function NotFound() {
+export default async function NotFound() {
+  const { t } = await getI18n();
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-4">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(251,191,36,0.12),transparent_60%)]" />
@@ -14,13 +16,13 @@ export default function NotFound() {
         <p className="text-7xl font-black tracking-widest text-amber-400">
           404
         </p>
-        <h1 className="mt-4 text-2xl font-bold">ไม่พบหน้าที่คุณต้องการ</h1>
+        <h1 className="mt-4 text-2xl font-bold">{t.errors.notFound}</h1>
 
         <Link
           href="/"
           className="mt-8 inline-flex items-center gap-2 rounded-lg bg-amber-400 px-5 py-2.5 text-sm font-semibold text-zinc-900 transition hover:bg-amber-300"
         >
-          <Home size={16} /> กลับหน้าหลัก
+          <Home size={16} /> {t.common.backHome}
         </Link>
       </div>
     </main>

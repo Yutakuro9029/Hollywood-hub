@@ -2,13 +2,72 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* ฟอนต์: body = Prompt, หัวข้อ = Playfair Display + Noto Serif Thai (ใช้ผ่านคลาส font-display) */
-@theme inline {
-  --font-sans: var(--font-sans-th), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-playfair), var(--font-serif-th), Georgia, serif;
+/* ═══════════════════════ Design tokens ═══════════════════════
+   ธีมดำ–ทอง: ดำเป็นพระเอก ทองเป็นเครื่องประดับ (ไม่เกิน ~10% ของพื้นที่)
+   ใช้ผ่าน Tailwind เช่น bg-ink, bg-surface, border-line, text-gold, text-cream, text-muted */
+:root {
+  --ink: #0a0a0a; /* พื้นหลัก */
+  --surface: #141414; /* พื้นการ์ด */
+  --surface-raised: #1c1c1c; /* การ์ดตอน hover / เมนูลอย */
+  --line: #2a2a2a; /* เส้นขอบ */
+  --gold: #d4af37; /* ทองหลัก */
+  --gold-light: #f1d98a; /* ทองอ่อน — ใช้กับตัวอักษรเล็ก (คอนทราสต์บนดำสูงกว่า) */
+  --gold-dark: #9c7a1e; /* ทองเข้ม — ใช้เป็นเส้น/ขอบเท่านั้น ไม่ใช้กับตัวอักษรเล็ก */
+  --cream: #f5f1e8; /* ตัวอักษรเนื้อหา */
+  --muted: #9a9a9a; /* ตัวอักษรรอง (7.4:1 บน #0A0A0A — ผ่าน AA) */
+  --gold-gradient: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold-light) 50%, var(--gold) 100%);
+  --radius-card: 6px;
+  --ease-premium: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Custom scrollbar สไตล์ Cinema */
+@theme inline {
+  --color-ink: var(--ink);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-line: var(--line);
+  --color-gold: var(--gold);
+  --color-gold-light: var(--gold-light);
+  --color-gold-dark: var(--gold-dark);
+  --color-cream: var(--cream);
+  --color-muted: var(--muted);
+
+  --radius-card: var(--radius-card);
+  --ease-premium: var(--ease-premium);
+
+  /* เนื้อหา = IBM Plex Sans Thai / หัวข้อ = Cinzel (ละติน) + Noto Serif Thai (ไทย) */
+  --font-sans: var(--font-sans-th), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-cinzel), var(--font-serif-th), Georgia, serif;
+  --font-serif: var(--font-serif-th), Georgia, serif;
+  --font-editorial: var(--font-bodoni), var(--font-serif-th), Georgia, serif;
+}
+
+/* ═══════════════════════ Base ═══════════════════════ */
+html {
+  color-scheme: dark;
+  background: var(--ink);
+}
+body {
+  background: var(--ink);
+  color: var(--cream);
+}
+
+/* film grain จาง ๆ ทั้งหน้า (SVG noise) — ไม่รับคลิก ไม่ขยับ */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+::selection {
+  background: var(--gold);
+  color: var(--ink);
+}
+
+/* scrollbar โทนดำ–ทอง */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -17,8 +76,90 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #3f3f46;
+  background: var(--line);
   border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gold-dark);
+}
+
+/* ═══════════════════════ Utilities ═══════════════════════ */
+
+/* ทองไล่สี — ใช้กับหัวข้อใหญ่/ตัวเลขเด่นเท่านั้น */
+@utility text-gold-gradient {
+  background: var(--gold-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+@utility bg-gold-gradient {
+  background: var(--gold-gradient);
+}
+/* เงาเรืองแสงทองจาง ๆ (ใช้ตอน hover/focus) */
+@utility glow-gold {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--gold) 55%, transparent),
+    0 10px 40px -10px color-mix(in srgb, var(--gold) 45%, transparent);
+}
+/* เส้นคั่นทอง 1px ที่จางที่ปลายทั้งสองข้าง */
+@utility rule-gold {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-dark) 20%, var(--gold) 50%, var(--gold-dark) 80%, transparent);
+}
+/* ตัวเลข Top 10: ขอบทอง ไส้โปร่ง */
+@utility numeral-outline {
+  color: transparent;
+  -webkit-text-stroke: 2px var(--gold);
+  paint-order: stroke fill;
+}
+/* ซ่อน scrollbar ของแถวเลื่อนแนวนอน (ยังเลื่อน/ปัดได้) */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* skeleton: เทาเข้มมีประกายทองวิ่งผ่าน */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--gold) 12%, transparent), transparent);
+  animation: shimmer 1.6s var(--ease-premium) infinite;
+}
+@keyframes shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* fade + slide 300ms (ใช้กับการเปลี่ยนสไลด์ / เปิดเมนู) */
+@keyframes fade-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-fade-slide {
+  animation: fade-slide-in 300ms var(--ease-premium) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after,
+  .animate-fade-slide {
+    animation: none;
+  }
 }
 
 /* ───────── ป้ายไฟโรงหนัง (Marquee bulbs) ─────────

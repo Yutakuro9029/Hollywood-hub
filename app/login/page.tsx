@@ -1,90 +1,117 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, Clapperboard, Search, Star } from "lucide-react";
+import { ArrowLeft, Search } from "lucide-react";
+import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { fontSans, fontSerif } from "@/lib/fonts";
-import { LoginBackdrop } from "@/components/login-backdrop";
+import { safeNext } from "@/lib/safe-next";
+import { tmdbImage } from "@/lib/tmdb-image";
 import { LoginForm } from "@/components/login-form";
+import { focusRing } from "@/components/editorial";
+import { getI18n } from "@/lib/i18n/server";
+import LanguageSwitch from "@/components/language-switch";
 
-export const metadata: Metadata = {
-  title: "เข้าสู่ระบบ | Hollywood Stars & Filmography Hub",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: `${t.login.metaTitle} | Hollywood Stars & Filmography Hub` };
+}
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string | string[] }>;
+}) {
+  const [{ next: rawNext }, { t, locale }] = await Promise.all([searchParams, getI18n()]);
+  const next = safeNext(Array.isArray(rawNext) ? rawNext[0] : rawNext);
+
   // ถ้าล็อกอินอยู่แล้ว ไม่ต้องเห็นหน้า login
   const session = await getSession();
-  if (session) redirect(session.role === "ADMIN" ? "/admin" : "/");
+  if (session) redirect(next ?? (session.role === "ADMIN" ? "/admin" : "/"));
+
+  // กำแพงใบหน้า (ย่อจากหน้าแรก) เป็นฉากหลังฝั่งซ้าย
+  const faces = await prisma.actors.findMany({
+    where: { avatar_url: { not: null } },
+    orderBy: [{ awards_count: { sort: "desc", nulls: "last" } }, { name: "asc" }],
+    take: 48,
+    select: { id: true, avatar_url: true },
+  });
 
   return (
-    <main
-      className={`${fontSans.variable} ${fontSerif.variable} relative isolate flex min-h-screen flex-col overflow-hidden bg-[#05060a] font-[family-name:var(--font-sans-th)] text-white`}
-    >
-      <LoginBackdrop />
-
-      {/* โลโก้มุมซ้ายบน + ปุ่มกลับหน้าแรก */}
-      <header className="flex items-center justify-between px-6 pt-6 sm:px-10 sm:pt-8">
-        <div className="flex items-center gap-2.5 text-amber-400">
-          <Clapperboard className="h-7 w-7" strokeWidth={1.75} />
-          <span className="text-lg font-semibold tracking-[0.12em] uppercase">
-            Hollywood Hub
-          </span>
-        </div>
-
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm text-white/80 backdrop-blur-md transition hover:bg-white/20 hover:text-amber-300 focus-visible:ring-2 focus-visible:ring-amber-400/60 focus-visible:outline-none"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          กลับหน้าแรก
+    <main className="relative grid min-h-screen bg-ink lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+      {/* โลโก้ + กลับหน้าแรก */}
+      <header className="absolute inset-x-0 top-0 z-20 flex items-center justify-between px-6 pt-6 sm:px-10 sm:pt-8">
+        <Link href="/" className={`rounded-sm ${focusRing}`} aria-label={t.nav.logoLabel}>
+          <span className="font-editorial text-2xl italic text-gold-light">Hollywood Hub</span>
         </Link>
+        <div className="flex items-center gap-5">
+          <LanguageSwitch />
+          <Link
+            href="/"
+            className={`inline-flex items-center gap-2 rounded-sm text-sm text-cream/75 transition-colors hover:text-gold-light ${focusRing}`}
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden />
+            {t.login.backHome}
+          </Link>
+        </div>
       </header>
 
-      <div className="flex flex-1 items-center px-6 py-10 sm:px-10">
-        <div className="mx-auto grid w-full max-w-6xl items-center gap-10 lg:grid-cols-[1.1fr_minmax(0,28rem)] lg:gap-16">
-          {/* ฝั่งซ้าย: หัวข้อ + ดาว + ช่องค้นหา */}
-          <section className="space-y-6">
-            <h2 className="text-4xl leading-[1.15] tracking-tight sm:text-5xl lg:text-6xl">
-              <span className="block font-semibold">ศูนย์รวมข้อมูล</span>
-              <span className="block font-light text-white/90">
-                ดาราและภาพยนตร์ฮอลลีวูด
-              </span>
-            </h2>
+      {/* ═══════ ฝั่งซ้าย: กำแพงใบหน้า + หัวข้อ ═══════ */}
+      <section className="relative isolate flex min-h-[46vh] items-end overflow-hidden px-6 pb-12 pt-28 sm:px-10 lg:min-h-screen lg:pb-16">
+        <ul aria-hidden className="absolute inset-0 -z-10 grid grid-cols-6 content-start sm:grid-cols-8">
+          {faces.map((f) => (
+            <li key={f.id} className="aspect-square overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={tmdbImage(f.avatar_url, "w185") ?? undefined}
+                alt=""
+                loading="lazy"
+                className="h-full w-full object-cover object-top opacity-30 grayscale"
+              />
+            </li>
+          ))}
+        </ul>
+        {/* มืดลงด้านล่างและจางไปทางฝั่งฟอร์ม */}
+        <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-t from-ink via-ink/75 to-ink/30" />
+        <div aria-hidden className="absolute inset-0 -z-10 hidden bg-gradient-to-r from-transparent via-transparent to-ink lg:block" />
 
-            <div className="flex gap-1.5 text-amber-400" aria-label="5 ดาว">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star
-                  key={i}
-                  className="h-5 w-5 fill-current drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]"
-                />
-              ))}
-            </div>
+        <div className="max-w-xl">
+          <h2 className="font-editorial text-[clamp(1.5rem,7.2vw,3rem)] leading-[1.25] text-cream lg:text-[clamp(2.25rem,3.3vw,3.5rem)]">
+            {/* ไทยไม่มีช่องว่างระหว่างคำ — ห้ามตัดกลางบรรทัด (ไม่งั้น "ฮอลลีวูด" ถูกตัดกลางคำ) ขนาดตัวอักษรปรับตามจอแทน */}
+            <span className="block">{t.login.headline1}</span>
+            <span className={`block text-cream/85 ${locale === "th" ? "whitespace-nowrap" : ""}`}>{t.login.headline2}</span>
+          </h2>
+          <span aria-hidden className="mt-6 block h-px w-14 bg-gold" />
+          <p className="mt-6 max-w-md leading-relaxed text-cream/75">
+            {t.login.intro}
+          </p>
 
-            <p className="hidden max-w-md text-base leading-relaxed font-light text-zinc-300 sm:block">
-              ค้นหาดาราที่คุณชื่นชอบ สำรวจผลงานภาพยนตร์
-              และติดตามรางวัลระดับโลกได้ในที่เดียว
-            </p>
-
-            {/* ช่องค้นหาแบบตกแต่ง (ยังไม่ใช่ฟอร์มจริง) */}
-            <div
-              aria-hidden
-              className="hidden max-w-md items-center gap-3 rounded-full border border-white/15 bg-white/5 px-5 py-3 text-sm font-light text-white/70 backdrop-blur-md sm:flex"
-            >
-              <Search className="h-4 w-4 text-amber-300" />
-              <span>ค้นหาดารา เช่น Cillian Murphy, Zendaya…</span>
-            </div>
-          </section>
-
-          {/* ฝั่งขวา: การ์ดเข้าสู่ระบบ (จุดโฟกัส) */}
-          <div className="w-full max-w-md justify-self-center lg:justify-self-end">
-            <LoginForm showDemoHint={process.env.NODE_ENV !== "production"} />
-          </div>
+          {/* ค้นหาได้จริง (ไม่ต้องเข้าสู่ระบบ) */}
+          <form action="/search" method="get" role="search" className="relative mt-8 hidden max-w-md sm:block">
+            <label htmlFor="login-search" className="sr-only">
+              {t.login.searchLabel}
+            </label>
+            <Search className="pointer-events-none absolute left-0 top-1/2 h-4 w-4 -translate-y-1/2 text-gold-light" aria-hidden />
+            <input
+              id="login-search"
+              name="q"
+              type="search"
+              placeholder={t.login.searchPlaceholder}
+              className="h-12 w-full border-0 border-b border-gold-dark bg-transparent pl-7 pr-1 text-cream placeholder:text-muted focus:border-gold focus:outline-none"
+            />
+          </form>
         </div>
-      </div>
+      </section>
 
-      <footer className="px-6 pb-6 text-center text-xs font-light tracking-wide text-white/50">
-        © {new Date().getFullYear()} Hollywood Stars &amp; Filmography Hub
-      </footer>
+      {/* ═══════ ฝั่งขวา: ฟอร์มเข้าสู่ระบบ ═══════ */}
+      <section className="flex flex-col justify-center px-6 py-14 sm:px-10 lg:min-h-screen lg:border-l lg:border-line lg:px-16 xl:px-24">
+        <div className="mx-auto w-full max-w-md">
+          {/* ไม่มีระบบสมัครสมาชิก จึงแสดงบัญชีทดสอบเสมอ */}
+          <LoginForm next={next} showDemoHint />
+        </div>
+        <footer className="mx-auto mt-14 w-full max-w-md text-xs text-muted">
+          © {new Date().getFullYear()} Hollywood Stars &amp; Filmography Hub
+        </footer>
+      </section>
     </main>
   );
 }

@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { Home, RotateCcw, TriangleAlert } from "lucide-react";
+import { useI18n } from "@/lib/i18n/client";
 
 export default function Error({
   error,
@@ -11,6 +12,7 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { t } = useI18n();
   useEffect(() => {
     console.error(error);
   }, [error]);
@@ -24,14 +26,14 @@ export default function Error({
           <TriangleAlert size={36} className="text-red-400" />
         </div>
 
-        <h1 className="text-2xl font-bold">เกิดข้อผิดพลาดบางอย่าง</h1>
+        <h1 className="text-2xl font-bold">{t.errors.title}</h1>
         <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
-          กรุณาลองใหม่อีกครั้ง หากยังพบปัญหาให้ติดต่อผู้ดูแลระบบ
+          {t.errors.hint}
         </p>
 
         {error.digest && (
           <p className="mt-3 font-mono text-xs text-zinc-400 dark:text-zinc-500">
-            รหัสอ้างอิง: {error.digest}
+            {t.errors.reference} {error.digest}
           </p>
         )}
 
@@ -40,13 +42,13 @@ export default function Error({
             onClick={reset}
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-400 px-5 py-2.5 text-sm font-semibold text-zinc-900 transition hover:bg-amber-300"
           >
-            <RotateCcw size={16} /> ลองอีกครั้ง
+            <RotateCcw size={16} /> {t.errors.retry}
           </button>
           <Link
             href="/"
             className="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-300 px-5 py-2.5 text-sm text-zinc-600 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
           >
-            <Home size={16} /> กลับหน้าหลัก
+            <Home size={16} /> {t.common.backHome}
           </Link>
         </div>
       </div>
